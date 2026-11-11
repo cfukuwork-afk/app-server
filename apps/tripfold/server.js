@@ -317,7 +317,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, undefined);
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
-    if (p === '/' || p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
+    if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
+    // 紹介ページ・プライバシーポリシー
+    if ((p === '/' || p === '/privacy') && req.method === 'GET') {
+      const f = path.join(__dirname, 'public', p === '/' ? 'index.html' : 'privacy.html');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' });
+      return fs.createReadStream(f).pipe(res);
+    }
 
     // 共有を始める
     if (req.method === 'POST' && p === '/v1/share') {
