@@ -202,6 +202,41 @@ function nominatim(q, near, lang) {
   return job;
 }
 
+/* ---------- 名前の補助：Wikipedia の座標（日本語・韓国語・中国語の地名に強い） ---------- */
+// OpenStreetMap は「サクレ・クール寺院」「ヴェルサイユ宮殿」のようなカタカナ名で見つからないことが多い。
+// その場合、その言語の Wikipedia を検索して、記事の座標を使う（near があれば 60km 以内のものだけ）
+let wikiQueue = Promise.resolve();
+function wikiGeo(q, near) {
+  const lang = /[぀-ヿ]/.test(q) ? ['ja', 'en'] : /[가-힯]/.test(q) ? ['ko', 'en'] : /[一-鿿]/.test(q) ? ['ja', 'zh', 'en'] : ['en'];
+  const job = wikiQueue.then(async () => {
+    for (const l of lang) {
+      try {
+        const u = new URL(`https://${l}.wikipedia.org/w/api.php`);
+        Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates', coprimary: 'primary' }).forEach(([k, v]) => u.searchParams.set(k, v));
+        const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
+        const j = await r.json();
+        const pages = Object.values(j?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+        for (const pg of pages) {
+          const c = pg.coordinates?.[0];
+          if (!c) continue;
+          const g = { lat: Math.round(c.lat * 1e6) / 1e6, lng: Math.round(c.lon * 1e6) / 1e6, name: String(pg.title || '').slice(0, 200), src: 'wiki' };
+          if (near && Math.hypot(g.lat - near.lat, (g.lng - near.lng) * Math.cos((near.lat * Math.PI) / 180)) * 111 > 60) continue;
+          return g;
+        }
+      } catch {}
+    }
+    return null;
+  });
+  wikiQueue = job.catch(() => null);
+  return job;
+}
+// 「モンマルトルを散策」「ルーブルでランチ」→ 場所の名前だけにする
+const cleanPlace = (q) =>
+  q
+    .replace(/(を|で|に|へ|の)?(散策|観光|見学|訪問|散歩|ぶらぶら|楽しむ|行く|立ち寄る|ランチ|ディナー|朝食|夕食|ショッピング|買い物)(する)?$/, '')
+    .replace(/^(.+?)(に戻る|へ戻る|に帰る)$/, '$1')
+    .trim();
+
 /* ---------- 道のり（OpenStreetMap の経路：徒歩・車） ---------- */
 const routes = new Map(); // 'foot|lat,lng|lat,lng' → { coords, km, min } / null
 let routeQueue = Promise.resolve();
@@ -505,10 +540,15 @@ const server = http.createServer(async (req, res) => {
       const lat = Number(url.searchParams.get('lat'));
       const lng = Number(url.searchParams.get('lng'));
       const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
-      const key = 'n:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      const key = 'n2:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
       if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
-      const g = await nominatim(q, near, String(req.headers['accept-language'] || 'en').slice(0, 40));
+      const lang = String(req.headers['accept-language'] || 'en').slice(0, 40);
+      let g = await nominatim(q, near, lang);
       if (g === undefined) return send(res, 503, { error: 'lookup failed' });
+      // 見つからなければ：動詞を外した名前 → Wikipedia の座標 の順に試す
+      const cq = cleanPlace(q);
+      if (!g && cq && cq !== q) g = (await nominatim(cq, near, lang)) || null;
+      if (!g) g = await wikiGeo(cq || q, near);
       if (Object.keys(geo).length < 300000) {
         geo[key] = g;
         saveGeoSoon();
