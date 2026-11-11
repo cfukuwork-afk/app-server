@@ -173,6 +173,35 @@ function saveGeoSoon() {
 }
 const geoKey = (q) => String(q || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 200);
 
+
+/* ---------- 場所の名前で探す（OpenStreetMap の Nominatim。1秒に1回まで・結果は保存して使い回す） ---------- */
+let nomiQueue = Promise.resolve();
+function nominatim(q, near, lang) {
+  const job = nomiQueue.then(async () => {
+    const u = new URL('https://nominatim.openstreetmap.org/search');
+    u.searchParams.set('format', 'jsonv2');
+    u.searchParams.set('limit', '1');
+    u.searchParams.set('q', q);
+    if (near) {
+      const d = 0.7;
+      u.searchParams.set('viewbox', `${near.lng - d},${near.lat + d},${near.lng + d},${near.lat - d}`);
+      u.searchParams.set('bounded', '1');
+    }
+    try {
+      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)', 'Accept-Language': lang || 'en' }, signal: AbortSignal.timeout(8000) });
+      const j = await r.json();
+      const g = Array.isArray(j) && j[0];
+      return g ? { lat: Math.round(Number(g.lat) * 1e6) / 1e6, lng: Math.round(Number(g.lon) * 1e6) / 1e6, name: String(g.display_name || '').slice(0, 200) } : null;
+    } catch {
+      return undefined; // 失敗（保存しない）
+    } finally {
+      await new Promise((r) => setTimeout(r, 1100));
+    }
+  });
+  nomiQueue = job.catch(() => null);
+  return job;
+}
+
 /* ---------- 写真 ---------- */
 function photoType(buf) {
   if (buf[0] === 0xff && buf[1] === 0xd8) return 'jpg';
@@ -395,6 +424,26 @@ const server = http.createServer(async (req, res) => {
 <div class="card"><div class="sub">合計 ${fmt(st.total, base)}</div>${per}</div>
 <div class="card"><div class="sub">内訳</div>${exps || '<p>まだありません</p>'}</div>
 <a class="btn" href="tripfold://join?c=${code}">アプリで開く</a><p class="sub">このページは共有している旅行の内容から自動で作られています。共有をやめると見られなくなります。</p>`);
+    }
+
+
+    // 名前で場所を探す（近くの地点があればその周りに絞る）
+    if (p === '/v1/geo/search' && req.method === 'GET') {
+      if (limited(ip, 'geosearch', 400, 60 * 60 * 1000)) return send(res, 429, { error: 'too many' });
+      const q = String(url.searchParams.get('q') || '').trim().slice(0, 200);
+      if (!q) return send(res, 400, { error: 'q required' });
+      const lat = Number(url.searchParams.get('lat'));
+      const lng = Number(url.searchParams.get('lng'));
+      const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
+      const key = 'n:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
+      const g = await nominatim(q, near, String(req.headers['accept-language'] || 'en').slice(0, 40));
+      if (g === undefined) return send(res, 503, { error: 'lookup failed' });
+      if (Object.keys(geo).length < 300000) {
+        geo[key] = g;
+        saveGeoSoon();
+      }
+      return g ? send(res, 200, g) : send(res, 404, { error: 'not found' });
     }
 
     // 場所探しの使い回し
