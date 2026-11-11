@@ -540,7 +540,7 @@ const server = http.createServer(async (req, res) => {
       const lat = Number(url.searchParams.get('lat'));
       const lng = Number(url.searchParams.get('lng'));
       const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
-      const key = 'n2:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      const key = 'n3:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
       if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
       const lang = String(req.headers['accept-language'] || 'en').slice(0, 40);
       let g = await nominatim(q, near, lang);
