@@ -344,6 +344,14 @@ const server = http.createServer(async (req, res) => {
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
     if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
+    // 旅行ガイド（/guides と /guides/<slug>）
+    if (req.method === 'GET' && (p === '/guides' || /^\/guides\/[a-z0-9-]+$/.test(p))) {
+      const name = p === '/guides' ? 'index' : p.slice(8);
+      const f = path.join(__dirname, 'public', 'guides', name + '.html');
+      if (!fs.existsSync(f)) return send(res, 404, { error: 'not found' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' });
+      return fs.createReadStream(f).pipe(res);
+    }
     // 紹介ページ・プライバシーポリシー
     if ((p === '/' || p === '/privacy') && req.method === 'GET') {
       const f = path.join(__dirname, 'public', p === '/' ? 'index.html' : 'privacy.html');
