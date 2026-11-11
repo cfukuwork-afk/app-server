@@ -213,12 +213,37 @@ function photoType(buf) {
 const MIME = { jpg: 'image/jpeg', png: 'image/png', heic: 'image/heic', webp: 'image/webp' };
 
 
+
+/* ---------- Webページの言葉（ブラウザの言語で切り替え） ---------- */
+const W = {
+  ja: { trip: '旅行', inviteGone: 'この招待は見つかりません', inviteGoneSub: '共有が終わっているか、コードが違うかもしれません。', joinTitle: '{name} に参加', invited: '「{name}」に招待されています', inviteBody: 'Tripfold で一緒に予定・費用・写真を編集できます。', openJoin: 'アプリで開いて参加', getApp: 'アプリを入れる（App Store）', splitOnly: 'アプリなしで割り勘だけ見る', codeHint: 'アプリで「共有コードで参加」に入れるコード', notFound: '見つかりません', noSettle: '精算は必要ありません。', paid: '払った', share: '分担', splitTitle: '{name} の割り勘', whoPays: 'だれが誰に渡すか（{c}・今日のレート）', total: '合計', details: '内訳', none: 'まだありません', openApp: 'アプリで開く', auto: 'このページは共有している旅行の内容から自動で作られています。共有をやめると見られなくなります。' },
+  en: { trip: 'Trip', inviteGone: 'This invite wasn’t found', inviteGoneSub: 'Sharing may have ended, or the code may be wrong.', joinTitle: 'Join {name}', invited: 'You’re invited to “{name}”', inviteBody: 'Plan bookings, costs and photos together in Tripfold.', openJoin: 'Open in the app and join', getApp: 'Get the app (App Store)', splitOnly: 'See the split without the app', codeHint: 'Code for “Join with a share code” in the app', notFound: 'Not found', noSettle: 'Nothing to settle.', paid: 'Paid', share: 'Share', splitTitle: '{name} — settle up', whoPays: 'Who pays whom ({c}, today’s rate)', total: 'Total', details: 'Details', none: 'Nothing yet', openApp: 'Open in the app', auto: 'This page is made automatically from the shared trip. It disappears when sharing stops.' },
+  ko: { trip: '여행', inviteGone: '초대를 찾을 수 없어요', inviteGoneSub: '공유가 끝났거나 코드가 다를 수 있어요.', joinTitle: '{name} 참여', invited: '「{name}」에 초대받았어요', inviteBody: 'Tripfold에서 일정·비용·사진을 함께 편집할 수 있어요.', openJoin: '앱에서 열고 참여', getApp: '앱 받기 (App Store)', splitOnly: '앱 없이 정산만 보기', codeHint: '앱의 「공유 코드로 참여」에 넣을 코드', notFound: '찾을 수 없어요', noSettle: '정산할 금액이 없어요.', paid: '낸 돈', share: '부담', splitTitle: '{name} 정산', whoPays: '누가 누구에게 줄까 ({c}·오늘 환율)', total: '합계', details: '내역', none: '아직 없어요', openApp: '앱에서 열기', auto: '이 페이지는 공유 중인 여행에서 자동으로 만들어져요. 공유를 멈추면 볼 수 없어요.' },
+  'zh-Hans': { trip: '旅行', inviteGone: '找不到这个邀请', inviteGoneSub: '分享可能已结束，或者分享码不对。', joinTitle: '加入 {name}', invited: '你被邀请加入「{name}」', inviteBody: '在 Tripfold 中一起编辑行程、费用和照片。', openJoin: '在应用中打开并加入', getApp: '下载应用（App Store）', splitOnly: '不用应用，只看分账', codeHint: '在应用「用分享码加入」中输入的分享码', notFound: '找不到', noSettle: '无需结算。', paid: '已付', share: '应摊', splitTitle: '{name} 的分账', whoPays: '谁付给谁（{c}·今日汇率）', total: '合计', details: '明细', none: '暂无', openApp: '在应用中打开', auto: '此页面根据分享的旅行自动生成，停止分享后将无法查看。' },
+  'zh-Hant': { trip: '旅行', inviteGone: '找不到這個邀請', inviteGoneSub: '分享可能已結束，或分享碼不正確。', joinTitle: '加入 {name}', invited: '你被邀請加入「{name}」', inviteBody: '在 Tripfold 中一起編輯行程、費用和照片。', openJoin: '在 App 中開啟並加入', getApp: '下載 App（App Store）', splitOnly: '不用 App，只看分帳', codeHint: '在 App「用分享碼加入」中輸入的分享碼', notFound: '找不到', noSettle: '無需結算。', paid: '已付', share: '應攤', splitTitle: '{name} 的分帳', whoPays: '誰付給誰（{c}・今日匯率）', total: '合計', details: '明細', none: '尚無', openApp: '在 App 中開啟', auto: '此頁面根據分享的旅行自動產生，停止分享後將無法查看。' },
+  es: { trip: 'Viaje', inviteGone: 'No se encontró esta invitación', inviteGoneSub: 'Puede que se haya dejado de compartir o que el código sea incorrecto.', joinTitle: 'Unirse a {name}', invited: 'Te invitan a «{name}»', inviteBody: 'Planead juntos reservas, gastos y fotos en Tripfold.', openJoin: 'Abrir en la app y unirse', getApp: 'Descargar la app (App Store)', splitOnly: 'Ver las cuentas sin la app', codeHint: 'Código para «Unirse con un código» en la app', notFound: 'No encontrado', noSettle: 'No hay nada que saldar.', paid: 'Pagado', share: 'Le toca', splitTitle: 'Cuentas de {name}', whoPays: 'Quién paga a quién ({c}, cambio de hoy)', total: 'Total', details: 'Detalle', none: 'Nada aún', openApp: 'Abrir en la app', auto: 'Esta página se crea automáticamente a partir del viaje compartido. Desaparece al dejar de compartir.' },
+  fr: { trip: 'Voyage', inviteGone: 'Invitation introuvable', inviteGoneSub: 'Le partage est peut-être terminé, ou le code est incorrect.', joinTitle: 'Rejoindre {name}', invited: 'Vous êtes invité à « {name} »', inviteBody: 'Préparez ensemble réservations, dépenses et photos dans Tripfold.', openJoin: 'Ouvrir dans l’app et rejoindre', getApp: 'Télécharger l’app (App Store)', splitOnly: 'Voir les comptes sans l’app', codeHint: 'Code pour « Rejoindre avec un code » dans l’app', notFound: 'Introuvable', noSettle: 'Rien à régler.', paid: 'Payé', share: 'Part', splitTitle: 'Comptes de {name}', whoPays: 'Qui doit à qui ({c}, taux du jour)', total: 'Total', details: 'Détail', none: 'Rien pour l’instant', openApp: 'Ouvrir dans l’app', auto: 'Cette page est créée automatiquement à partir du voyage partagé. Elle disparaît quand le partage s’arrête.' },
+  de: { trip: 'Reise', inviteGone: 'Einladung nicht gefunden', inviteGoneSub: 'Das Teilen wurde vielleicht beendet oder der Code stimmt nicht.', joinTitle: '{name} beitreten', invited: 'Du bist zu „{name}“ eingeladen', inviteBody: 'Plant Buchungen, Kosten und Fotos gemeinsam in Tripfold.', openJoin: 'In der App öffnen und beitreten', getApp: 'App laden (App Store)', splitOnly: 'Abrechnung ohne App ansehen', codeHint: 'Code für „Mit Code beitreten“ in der App', notFound: 'Nicht gefunden', noSettle: 'Nichts abzurechnen.', paid: 'Bezahlt', share: 'Anteil', splitTitle: 'Abrechnung: {name}', whoPays: 'Wer zahlt wem ({c}, heutiger Kurs)', total: 'Gesamt', details: 'Details', none: 'Noch nichts', openApp: 'In der App öffnen', auto: 'Diese Seite wird automatisch aus der geteilten Reise erstellt und verschwindet, wenn das Teilen endet.' },
+  it: { trip: 'Viaggio', inviteGone: 'Invito non trovato', inviteGoneSub: 'La condivisione potrebbe essere terminata o il codice è sbagliato.', joinTitle: 'Unisciti a {name}', invited: 'Sei invitato a «{name}»', inviteBody: 'Organizzate insieme prenotazioni, spese e foto in Tripfold.', openJoin: 'Apri nell’app e unisciti', getApp: 'Scarica l’app (App Store)', splitOnly: 'Vedi i conti senza l’app', codeHint: 'Codice per «Unisciti con un codice» nell’app', notFound: 'Non trovato', noSettle: 'Niente da saldare.', paid: 'Pagato', share: 'Quota', splitTitle: 'Conti di {name}', whoPays: 'Chi paga chi ({c}, cambio di oggi)', total: 'Totale', details: 'Dettaglio', none: 'Ancora niente', openApp: 'Apri nell’app', auto: 'Questa pagina è creata automaticamente dal viaggio condiviso. Scompare quando la condivisione termina.' },
+  pt: { trip: 'Viagem', inviteGone: 'Convite não encontrado', inviteGoneSub: 'O compartilhamento pode ter terminado ou o código está errado.', joinTitle: 'Entrar em {name}', invited: 'Você foi convidado para “{name}”', inviteBody: 'Planejem juntos reservas, gastos e fotos no Tripfold.', openJoin: 'Abrir no app e entrar', getApp: 'Baixar o app (App Store)', splitOnly: 'Ver o acerto sem o app', codeHint: 'Código para “Entrar com código” no app', notFound: 'Não encontrado', noSettle: 'Nada a acertar.', paid: 'Pagou', share: 'Parte', splitTitle: 'Acerto de {name}', whoPays: 'Quem paga quem ({c}, câmbio de hoje)', total: 'Total', details: 'Detalhes', none: 'Nada ainda', openApp: 'Abrir no app', auto: 'Esta página é criada automaticamente a partir da viagem compartilhada e some quando o compartilhamento termina.' },
+};
+function langOf(req) {
+  const a = String(req.headers['accept-language'] || '').toLowerCase();
+  for (const part of a.split(',')) {
+    const l = part.trim().split(';')[0];
+    if (l.startsWith('zh')) return /hant|tw|hk|mo/.test(l) ? 'zh-Hant' : 'zh-Hans';
+    const b = l.slice(0, 2);
+    if (W[b]) return b;
+  }
+  return 'en';
+}
+
 /* ---------- Webページ（アプリがない人向け：招待・割り勘） ---------- */
 const APP_STORE = 'https://apps.apple.com/app/id6833397163';
 const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-function html(res, status, title, body) {
+function html(res, status, title, body, lang = 'en') {
   res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
-  res.end(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
+  res.end(`<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
 <style>body{margin:0;background:#F4F3EF;color:#15171C;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}main{max-width:520px;margin:0 auto;padding:28px 18px 48px}
 .k{font-size:12px;letter-spacing:.12em;color:#8A8F98;font-weight:700}h1{font-size:26px;margin:4px 0 18px;line-height:1.3}.card{background:#fff;border-radius:18px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #EEE}.row:last-child{border:0}.amt{font-weight:800;white-space:nowrap}.pink{color:#D6336C}.sub{color:#8A8F98;font-size:13px}
@@ -387,25 +412,30 @@ const server = http.createServer(async (req, res) => {
     // 招待ページ：LINEなどで押せるURL → アプリを開く
     m = p.match(/^\/j\/([0-9A-Za-z-]{8,9})$/);
     if (m && req.method === 'GET') {
+      const L = langOf(req);
+      const w = W[L];
       const code = normCode(m[1]);
       const doc = CODE_RE.test(code) ? await loadDoc(code) : null;
-      if (!doc) return html(res, 404, 'Tripfold', '<h1>この招待は見つかりません</h1><p>共有が終わっているか、コードが違うかもしれません。</p>');
+      if (!doc) return html(res, 404, 'Tripfold', `<h1>${w.inviteGone}</h1><p>${w.inviteGoneSub}</p>`, L);
       const deep = `tripfold://join?c=${code}`;
-      return html(res, 200, `${doc.trip.name || '旅行'} に参加`, `<div class="k">INVITE</div><h1>「${esc(doc.trip.name || '旅行')}」に招待されています</h1>
-<div class="card"><p>Tripfold で一緒に予定・費用・写真を編集できます。</p><a class="btn" href="${deep}">アプリで開いて参加</a>
-<a class="btn btn2" href="${APP_STORE}">アプリを入れる（App Store）</a><a class="btn btn2" href="/s/${code}">アプリなしで割り勘だけ見る</a></div>
-<div class="card"><div class="sub">アプリで「共有コードで参加」に入れるコード</div><div class="code">${pretty(code)}</div></div>
-<script>setTimeout(function(){location.href=${JSON.stringify(deep)}},300)</script>`);
+      const nm = esc(doc.trip.name || w.trip);
+      return html(res, 200, w.joinTitle.replace('{name}', doc.trip.name || w.trip), `<div class="k">INVITE</div><h1>${w.invited.replace('{name}', nm)}</h1>
+<div class="card"><p>${w.inviteBody}</p><a class="btn" href="${deep}">${w.openJoin}</a>
+<a class="btn btn2" href="${APP_STORE}">${w.getApp}</a><a class="btn btn2" href="/s/${code}">${w.splitOnly}</a></div>
+<div class="card"><div class="sub">${w.codeHint}</div><div class="code">${pretty(code)}</div></div>
+<script>setTimeout(function(){location.href=${JSON.stringify(deep)}},300)</script>`, L);
     }
 
     // 割り勘ページ（アプリ不要）
     m = p.match(/^\/s\/([0-9A-Za-z-]{8,9})$/);
     if (m && req.method === 'GET') {
+      const L = langOf(req);
+      const w = W[L];
       const code = normCode(m[1]);
       const doc = CODE_RE.test(code) ? await loadDoc(code) : null;
       if (!doc) {
         if (limited(ip, 'miss', 30, 10 * 60 * 1000)) return send(res, 429, { error: 'too many tries' });
-        return html(res, 404, 'Tripfold', '<h1>見つかりません</h1>');
+        return html(res, 404, 'Tripfold', `<h1>${w.notFound}</h1>`, L);
       }
       const t = doc.trip;
       const base = /^[A-Z]{3}$/.test(url.searchParams.get('c') || '') ? url.searchParams.get('c') : 'JPY';
@@ -413,19 +443,19 @@ const server = http.createServer(async (req, res) => {
       const name = (id) => esc(((t.members || []).find((x) => x.id === id) || {}).name || '?');
       const pays = st.pay.length
         ? st.pay.map((x) => `<div class="row"><span>${name(x.from)} → ${name(x.to)}</span><span class="amt pink">${fmt(x.amount, base)}</span></div>`).join('')
-        : '<p>精算は必要ありません。</p>';
-      const per = (t.members || []).map((mm) => `<div class="row"><span>${esc(mm.name)}</span><span class="sub">払った ${fmt(st.paid[mm.id] || 0, base)} ／ 分担 ${fmt(st.owe[mm.id] || 0, base)}</span></div>`).join('');
+        : `<p>${w.noSettle}</p>`;
+      const per = (t.members || []).map((mm) => `<div class="row"><span>${esc(mm.name)}</span><span class="sub">${w.paid} ${fmt(st.paid[mm.id] || 0, base)} / ${w.share} ${fmt(st.owe[mm.id] || 0, base)}</span></div>`).join('');
       const exps = [...(t.bookings || []).filter((b) => b.price && !b.cancelled).map((b) => ({ d: b.start, n: b.title, a: b.price, c: b.currency || base, by: b.paidBy })), ...(t.expenses || []).map((e) => ({ d: e.date, n: e.title, a: e.amount, c: e.currency, by: e.paidBy }))]
         .sort((a, b) => String(a.d).localeCompare(String(b.d)))
-        .map((x) => `<div class="row"><span>${esc(x.n || '')}<br><span class="sub">${esc(x.d || '')}・${name(x.by || (t.members || [])[0]?.id)}</span></span><span class="amt">${fmt(x.a, x.c)}</span></div>`)
+        .map((x) => `<div class="row"><span>${esc(x.n || '')}<br><span class="sub">${esc(x.d || '')} · ${name(x.by || (t.members || [])[0]?.id)}</span></span><span class="amt">${fmt(x.a, x.c)}</span></div>`)
         .join('');
-      return html(res, 200, `${t.name || '旅行'} の割り勘`, `<div class="k">SETTLE UP</div><h1>${esc(t.name || '旅行')} の割り勘</h1>
-<div class="card"><div class="sub">だれが誰に渡すか（${base}・今日のレート）</div>${pays}</div>
-<div class="card"><div class="sub">合計 ${fmt(st.total, base)}</div>${per}</div>
-<div class="card"><div class="sub">内訳</div>${exps || '<p>まだありません</p>'}</div>
-<a class="btn" href="tripfold://join?c=${code}">アプリで開く</a><p class="sub">このページは共有している旅行の内容から自動で作られています。共有をやめると見られなくなります。</p>`);
+      const nm = esc(t.name || w.trip);
+      return html(res, 200, w.splitTitle.replace('{name}', t.name || w.trip), `<div class="k">SETTLE UP</div><h1>${w.splitTitle.replace('{name}', nm)}</h1>
+<div class="card"><div class="sub">${w.whoPays.replace('{c}', base)}</div>${pays}</div>
+<div class="card"><div class="sub">${w.total} ${fmt(st.total, base)}</div>${per}</div>
+<div class="card"><div class="sub">${w.details}</div>${exps || `<p>${w.none}</p>`}</div>
+<a class="btn" href="tripfold://join?c=${code}">${w.openApp}</a><p class="sub">${w.auto}</p>`, L);
     }
-
 
     // 名前で場所を探す（近くの地点があればその周りに絞る）
     if (p === '/v1/geo/search' && req.method === 'GET') {
