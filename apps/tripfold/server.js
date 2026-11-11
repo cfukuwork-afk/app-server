@@ -333,6 +333,8 @@ function settleTrip(t, base, rates) {
 }
 
 /* ---------- 受付 ---------- */
+const wbb = require('./wbb')({ DATA, send, readBody, limited });
+
 const server = http.createServer(async (req, res) => {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   const url = new URL(req.url, 'http://x');
@@ -505,6 +507,9 @@ const server = http.createServer(async (req, res) => {
       }
       return g ? send(res, 200, g) : send(res, 404, { error: 'not found' });
     }
+
+    // World Budget Book（バックアップ・共有の家計簿）
+    if (p.startsWith('/wbb/')) return await wbb(req, res, url, p, ip);
 
     // 2地点の道のり（地図に実際の道を描く）
     if (p === '/v1/geo/route' && req.method === 'GET') {
