@@ -26,6 +26,7 @@ const COLLECTIONS = ['bookings', 'expenses', 'checklist', 'members', 'wishes'];
 const META = ['name', 'emoji', 'cover', 'budget'];
 
 /* ---------- 小さな道具 ---------- */
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
 const now = () => Date.now();
 const newCode = () => Array.from(crypto.randomBytes(8), (b) => ALPHABET[b % ALPHABET.length]).join('');
 const normCode = (c) => String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
@@ -33,7 +34,7 @@ const tripFile = (code) => path.join(TRIPS, `${code}.json`);
 
 function send(res, status, body, headers = {}) {
   const data = body === undefined ? '' : typeof body === 'string' ? body : JSON.stringify(body);
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...CORS, ...headers });
   res.end(data);
 }
 
@@ -188,6 +189,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname.replace(/\/+$/, '') || '/';
   try {
+    if (req.method === 'OPTIONS') return send(res, 204, undefined);
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
     if (p === '/' || p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
@@ -273,7 +275,7 @@ const server = http.createServer(async (req, res) => {
       const file = path.join(PHOTOS, code, m[2]);
       try {
         const st = await fsp.stat(file);
-        res.writeHead(200, { 'Content-Type': MIME[m[3]], 'Content-Length': st.size, 'Cache-Control': 'public, max-age=31536000, immutable' });
+        res.writeHead(200, { 'Content-Type': MIME[m[3]], 'Content-Length': st.size, 'Cache-Control': 'public, max-age=31536000, immutable', ...CORS });
         fs.createReadStream(file).pipe(res);
       } catch {
         send(res, 404, { error: 'not found' });
