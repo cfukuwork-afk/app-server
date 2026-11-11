@@ -202,6 +202,30 @@ function nominatim(q, near, lang) {
   return job;
 }
 
+/* ---------- 道のり（OpenStreetMap の経路：徒歩・車） ---------- */
+const routes = new Map(); // 'foot|lat,lng|lat,lng' → { coords, km, min } / null
+let routeQueue = Promise.resolve();
+function osmRoute(mode, a, b) {
+  const job = routeQueue.then(async () => {
+    const prof = mode === 'foot' ? 'routed-foot' : 'routed-car';
+    const u = `https://routing.openstreetmap.de/${prof}/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=simplified&geometries=geojson`;
+    try {
+      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
+      const j = await r.json();
+      const rt = j && j.routes && j.routes[0];
+      if (!rt) return null;
+      const coords = (rt.geometry?.coordinates || []).slice(0, 400).map(([lng, lat]) => [Math.round(lat * 1e5) / 1e5, Math.round(lng * 1e5) / 1e5]);
+      return { coords, km: Math.round(rt.distance / 10) / 100, min: Math.round(rt.duration / 60) };
+    } catch {
+      return undefined;
+    } finally {
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  });
+  routeQueue = job.catch(() => null);
+  return job;
+}
+
 /* ---------- 写真 ---------- */
 function photoType(buf) {
   if (buf[0] === 0xff && buf[1] === 0xd8) return 'jpg';
@@ -480,6 +504,28 @@ const server = http.createServer(async (req, res) => {
         saveGeoSoon();
       }
       return g ? send(res, 200, g) : send(res, 404, { error: 'not found' });
+    }
+
+    // 2地点の道のり（地図に実際の道を描く）
+    if (p === '/v1/geo/route' && req.method === 'GET') {
+      if (limited(ip, 'georoute', 600, 60 * 60 * 1000)) return send(res, 429, { error: 'too many' });
+      const mode = url.searchParams.get('mode') === 'foot' ? 'foot' : 'car';
+      const pt = (k) => {
+        const [la, ln] = String(url.searchParams.get(k) || '').split(',').map(Number);
+        return isFinite(la) && isFinite(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180 ? { lat: Math.round(la * 1e4) / 1e4, lng: Math.round(ln * 1e4) / 1e4 } : null;
+      };
+      const a = pt('from');
+      const b = pt('to');
+      if (!a || !b) return send(res, 400, { error: 'bad' });
+      const km0 = Math.hypot(a.lat - b.lat, (a.lng - b.lng) * Math.cos((a.lat * Math.PI) / 180)) * 111;
+      if (km0 > (mode === 'foot' ? 8 : 400)) return send(res, 404, { error: 'too far' });
+      const key = `${mode}|${a.lat},${a.lng}|${b.lat},${b.lng}`;
+      if (routes.has(key)) return routes.get(key) ? send(res, 200, routes.get(key)) : send(res, 404, { error: 'not found' });
+      const r = await osmRoute(mode, a, b);
+      if (r === undefined) return send(res, 503, { error: 'lookup failed' });
+      if (routes.size > 20000) routes.delete(routes.keys().next().value);
+      routes.set(key, r);
+      return r ? send(res, 200, r) : send(res, 404, { error: 'not found' });
     }
 
     // 場所探しの使い回し
