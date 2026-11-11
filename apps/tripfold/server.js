@@ -548,7 +548,14 @@ const server = http.createServer(async (req, res) => {
       // 見つからなければ：動詞を外した名前 → Wikipedia の座標 の順に試す
       const cq = cleanPlace(q);
       if (!g && cq && cq !== q) g = (await nominatim(cq, near, lang)) || null;
-      if (!g) g = await wikiGeo(cq || q, near);
+      // 「店名, 住所」の形で見つからないとき：住所だけ → 店名だけ（＋最後の町名）で探す
+      const parts = (cq || q).split(/\s*,\s*/).filter(Boolean);
+      if (!g && parts.length >= 2) {
+        const addr = parts.slice(1).join(', ');
+        if (/\d/.test(addr)) g = (await nominatim(addr, near, lang)) || null;
+        if (!g) g = (await nominatim(`${parts[0]}, ${parts[parts.length - 1]}`, near, lang)) || null;
+      }
+      if (!g) g = await wikiGeo(parts[0] || cq || q, near);
       if (Object.keys(geo).length < 300000) {
         geo[key] = g;
         saveGeoSoon();
