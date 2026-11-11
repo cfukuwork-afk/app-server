@@ -22,7 +22,7 @@ const MAX_PHOTO = 15 * 1024 * 1024;
 const MAX_PHOTOS_PER_TRIP = 500;
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const CODE_RE = /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/;
-const COLLECTIONS = ['bookings', 'expenses', 'checklist', 'members', 'wishes'];
+const COLLECTIONS = ['bookings', 'expenses', 'checklist', 'members', 'wishes', 'inbox'];
 const META = ['name', 'emoji', 'cover', 'budget'];
 
 /* ---------- 小さな道具 ---------- */
@@ -183,6 +183,77 @@ function photoType(buf) {
 }
 const MIME = { jpg: 'image/jpeg', png: 'image/png', heic: 'image/heic', webp: 'image/webp' };
 
+
+/* ---------- Webページ（アプリがない人向け：招待・割り勘） ---------- */
+const APP_STORE = 'https://apps.apple.com/app/id6833397163';
+const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+function html(res, status, title, body) {
+  res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+  res.end(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
+<style>body{margin:0;background:#F4F3EF;color:#15171C;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}main{max-width:520px;margin:0 auto;padding:28px 18px 48px}
+.k{font-size:12px;letter-spacing:.12em;color:#8A8F98;font-weight:700}h1{font-size:26px;margin:4px 0 18px;line-height:1.3}.card{background:#fff;border-radius:18px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #EEE}.row:last-child{border:0}.amt{font-weight:800;white-space:nowrap}.pink{color:#D6336C}.sub{color:#8A8F98;font-size:13px}
+.btn{display:block;text-align:center;background:#15171C;color:#fff;text-decoration:none;font-weight:800;padding:15px;border-radius:14px;margin:10px 0}.btn2{background:#fff;color:#15171C;border:1px solid #DDD}
+.code{font:800 24px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;padding:10px}</style></head><body><main>${body}<p class="sub" style="margin-top:28px">Tripfold</p></main></body></html>`);
+}
+const pretty = (c) => c.slice(0, 4) + '-' + c.slice(4);
+
+// 為替（6時間ごとに取り直す）
+const rateCache = new Map();
+async function ratesFor(base) {
+  const hit = rateCache.get(base);
+  if (hit && now() - hit.at < 6 * 3600 * 1000) return hit.rates;
+  try {
+    const r = await fetch(`https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`, { signal: AbortSignal.timeout(5000) });
+    const j = await r.json();
+    if (j && j.rates) {
+      rateCache.set(base, { at: now(), rates: { ...j.rates, [base]: 1 } });
+      return rateCache.get(base).rates;
+    }
+  } catch {}
+  return hit ? hit.rates : { [base]: 1 };
+}
+const DEC0 = ['JPY', 'KRW', 'VND', 'IDR', 'CLP', 'ISK', 'HUF', 'TWD'];
+const fmt = (n, c) => {
+  const d = DEC0.includes(c) ? 0 : 2;
+  return `${c} ${Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+};
+/** アプリと同じ割り勘の計算（母国通貨） */
+function settleTrip(t, base, rates) {
+  const toHome = (v, c) => (!c || c === base ? v : rates[c] ? v / rates[c] : 0);
+  const ids = (t.members || []).map((m) => m.id);
+  const paid = {}, owe = {};
+  ids.forEach((i) => ((paid[i] = 0), (owe[i] = 0)));
+  const items = [
+    ...(t.bookings || []).filter((b) => !b.cancelled).map((b) => ({ v: b.price ? toHome(Number(b.price), b.currency) : 0, by: b.paidBy, sw: b.splitWith })),
+    ...(t.expenses || []).map((e) => ({ v: e.rate && e.currency !== base ? Number(e.amount) * Number(e.rate) : toHome(Number(e.amount), e.currency), by: e.paidBy, sw: e.splitWith })),
+  ];
+  let total = 0;
+  items.forEach((x) => {
+    if (!x.v) return;
+    const payer = x.by && ids.includes(x.by) ? x.by : ids[0];
+    const among = (x.sw && x.sw.length ? x.sw : ids).filter((i) => ids.includes(i));
+    if (!payer || !among.length) return;
+    total += x.v;
+    paid[payer] += x.v;
+    among.forEach((i) => (owe[i] += x.v / among.length));
+  });
+  const bal = ids.map((i) => ({ id: i, v: paid[i] - owe[i] }));
+  const cred = bal.filter((b) => b.v > 0.5).sort((a, b) => b.v - a.v);
+  const debt = bal.filter((b) => b.v < -0.5).sort((a, b) => a.v - b.v);
+  const pay = [];
+  let i = 0, j = 0;
+  while (i < debt.length && j < cred.length) {
+    const x = Math.min(-debt[i].v, cred[j].v);
+    pay.push({ from: debt[i].id, to: cred[j].id, amount: x });
+    debt[i].v += x;
+    cred[j].v -= x;
+    if (debt[i].v > -0.5) i++;
+    if (cred[j].v < 0.5) j++;
+  }
+  return { total, paid, owe, pay };
+}
+
 /* ---------- 受付 ---------- */
 const server = http.createServer(async (req, res) => {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
@@ -283,6 +354,49 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+
+    // 招待ページ：LINEなどで押せるURL → アプリを開く
+    m = p.match(/^\/j\/([0-9A-Za-z-]{8,9})$/);
+    if (m && req.method === 'GET') {
+      const code = normCode(m[1]);
+      const doc = CODE_RE.test(code) ? await loadDoc(code) : null;
+      if (!doc) return html(res, 404, 'Tripfold', '<h1>この招待は見つかりません</h1><p>共有が終わっているか、コードが違うかもしれません。</p>');
+      const deep = `tripfold://join?c=${code}`;
+      return html(res, 200, `${doc.trip.name || '旅行'} に参加`, `<div class="k">INVITE</div><h1>「${esc(doc.trip.name || '旅行')}」に招待されています</h1>
+<div class="card"><p>Tripfold で一緒に予定・費用・写真を編集できます。</p><a class="btn" href="${deep}">アプリで開いて参加</a>
+<a class="btn btn2" href="${APP_STORE}">アプリを入れる（App Store）</a><a class="btn btn2" href="/s/${code}">アプリなしで割り勘だけ見る</a></div>
+<div class="card"><div class="sub">アプリで「共有コードで参加」に入れるコード</div><div class="code">${pretty(code)}</div></div>
+<script>setTimeout(function(){location.href=${JSON.stringify(deep)}},300)</script>`);
+    }
+
+    // 割り勘ページ（アプリ不要）
+    m = p.match(/^\/s\/([0-9A-Za-z-]{8,9})$/);
+    if (m && req.method === 'GET') {
+      const code = normCode(m[1]);
+      const doc = CODE_RE.test(code) ? await loadDoc(code) : null;
+      if (!doc) {
+        if (limited(ip, 'miss', 30, 10 * 60 * 1000)) return send(res, 429, { error: 'too many tries' });
+        return html(res, 404, 'Tripfold', '<h1>見つかりません</h1>');
+      }
+      const t = doc.trip;
+      const base = /^[A-Z]{3}$/.test(url.searchParams.get('c') || '') ? url.searchParams.get('c') : 'JPY';
+      const st = settleTrip(t, base, await ratesFor(base));
+      const name = (id) => esc(((t.members || []).find((x) => x.id === id) || {}).name || '?');
+      const pays = st.pay.length
+        ? st.pay.map((x) => `<div class="row"><span>${name(x.from)} → ${name(x.to)}</span><span class="amt pink">${fmt(x.amount, base)}</span></div>`).join('')
+        : '<p>精算は必要ありません。</p>';
+      const per = (t.members || []).map((mm) => `<div class="row"><span>${esc(mm.name)}</span><span class="sub">払った ${fmt(st.paid[mm.id] || 0, base)} ／ 分担 ${fmt(st.owe[mm.id] || 0, base)}</span></div>`).join('');
+      const exps = [...(t.bookings || []).filter((b) => b.price && !b.cancelled).map((b) => ({ d: b.start, n: b.title, a: b.price, c: b.currency || base, by: b.paidBy })), ...(t.expenses || []).map((e) => ({ d: e.date, n: e.title, a: e.amount, c: e.currency, by: e.paidBy }))]
+        .sort((a, b) => String(a.d).localeCompare(String(b.d)))
+        .map((x) => `<div class="row"><span>${esc(x.n || '')}<br><span class="sub">${esc(x.d || '')}・${name(x.by || (t.members || [])[0]?.id)}</span></span><span class="amt">${fmt(x.a, x.c)}</span></div>`)
+        .join('');
+      return html(res, 200, `${t.name || '旅行'} の割り勘`, `<div class="k">SETTLE UP</div><h1>${esc(t.name || '旅行')} の割り勘</h1>
+<div class="card"><div class="sub">だれが誰に渡すか（${base}・今日のレート）</div>${pays}</div>
+<div class="card"><div class="sub">合計 ${fmt(st.total, base)}</div>${per}</div>
+<div class="card"><div class="sub">内訳</div>${exps || '<p>まだありません</p>'}</div>
+<a class="btn" href="tripfold://join?c=${code}">アプリで開く</a><p class="sub">このページは共有している旅行の内容から自動で作られています。共有をやめると見られなくなります。</p>`);
+    }
+
     // 場所探しの使い回し
     if (p === '/v1/geo') {
       if (req.method === 'GET') {
@@ -313,4 +427,4 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) server.listen(PORT, '127.0.0.1', () => console.log(`tripfold listening on ${PORT}`));
-module.exports = { mergeTrip };
+module.exports = { mergeTrip, settleTrip };
