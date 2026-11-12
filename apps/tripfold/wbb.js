@@ -40,13 +40,14 @@ module.exports = function makeWbb({ DATA, send, readBody, limited }) {
     id: String(e.id || '').slice(0, 60),
     date: /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : '',
     kind: e.kind === 'in' ? 'in' : 'out',
-    amount: Math.round(Number(e.amount) * 100) / 100 || 0,
+    amount: isFinite(Number(e.amount)) && Math.abs(Number(e.amount)) < 1e10 ? Math.round(Number(e.amount) * 100) / 100 || 0 : 0,
     currency: String(e.currency || '').toUpperCase().slice(0, 3),
     cat: String(e.cat || '').slice(0, 40),
     memo: String(e.memo || '').slice(0, 120),
   });
   const shareCsv = (sh) => {
-    const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    // 「=」「+」「-」「@」で始まる文字は表計算ソフトで数式として動くので、先頭に ' をつける
+    const q = (v) => `"${(/^[=+\-@\t\r]/.test(String(v)) ? "'" : '') + String(v).replace(/"/g, '""')}"`;
     const rows = [];
     Object.values(sh.members || {}).forEach((m) => (m.entries || []).forEach((e) => rows.push([e.date, q(m.name), e.kind, e.amount, e.currency, q(e.cat), q(e.memo)].join(','))));
     rows.sort();
