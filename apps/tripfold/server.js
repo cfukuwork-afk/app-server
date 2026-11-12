@@ -212,12 +212,22 @@ function wikiGeo(q, near) {
     for (const l of lang) {
       try {
         const u = new URL(`https://${l}.wikipedia.org/w/api.php`);
-        Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates', coprimary: 'primary' }).forEach(([k, v]) => u.searchParams.set(k, v));
+        Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates|langlinks', coprimary: 'primary', lllang: 'en', lllimit: '1' }).forEach(([k, v]) => u.searchParams.set(k, v));
         const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
         const j = await r.json();
         const pages = Object.values(j?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-        for (const pg of pages) {
-          const c = pg.coordinates?.[0];
+        for (const pg of pages.slice(0, 3)) {
+          let c = pg.coordinates?.[0];
+          // 日本語版に座標がない記事（例：トレヴィの泉）は、英語版の記事の座標を使う
+          const en = pg.langlinks?.[0]?.['*'];
+          if (!c && en && l !== 'en') {
+            try {
+              const u2 = new URL('https://en.wikipedia.org/w/api.php');
+              Object.entries({ action: 'query', format: 'json', titles: en, prop: 'coordinates', coprimary: 'primary', redirects: '1' }).forEach(([k, v]) => u2.searchParams.set(k, v));
+              const j2 = await (await fetch(u2, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app)' }, signal: AbortSignal.timeout(6000) })).json();
+              c = Object.values(j2?.query?.pages ?? {})[0]?.coordinates?.[0];
+            } catch {}
+          }
           if (!c) continue;
           const g = { lat: Math.round(c.lat * 1e6) / 1e6, lng: Math.round(c.lon * 1e6) / 1e6, name: String(pg.title || '').slice(0, 200), src: 'wiki' };
           if (near && Math.hypot(g.lat - near.lat, (g.lng - near.lng) * Math.cos((near.lat * Math.PI) / 180)) * 111 > 60) continue;
@@ -230,6 +240,24 @@ function wikiGeo(q, near) {
   wikiQueue = job.catch(() => null);
   return job;
 }
+// 日本の住所（〒・都道府県・丁目・番地）は国土地理院の住所検索がいちばん正確
+const JA_ADDR = /(〒\s?\d{3}-?\d{4}|[都道府県].{0,12}[市区町村郡]|丁目|番地|\d+-\d+(-\d+)?$)/;
+async function gsiGeo(q) {
+  try {
+    const qq = q.replace(/〒\s?\d{3}-?\d{4}\s*/, '').replace(/\s+/g, '').slice(0, 80);
+    const r = await fetch('https://msearch.gsi.go.jp/address-search/AddressSearch?q=' + encodeURIComponent(qq), { signal: AbortSignal.timeout(6000) });
+    const j = await r.json();
+    const f = Array.isArray(j) ? j[0] : null;
+    if (!f?.geometry?.coordinates) return null;
+    const [lng, lat] = f.geometry.coordinates;
+    return { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6, name: String(f.properties?.title || qq).slice(0, 200), src: 'gsi' };
+  } catch {
+    return null;
+  }
+}
+// 「ランチ」「ホテル」「カフェ」だけの予定は場所がわからない（遠くの同じ名前の店に立てないように）
+const GENERIC = /^(ホテル|宿|旅館|カフェ|喫茶店?|ランチ|ディナー|朝食|昼食|夕食|朝ごはん|昼ごはん|晩ごはん|夜ごはん|食事|レストラン|居酒屋|バー|ショッピング|買い物|お土産|おみやげ|散策|散歩|観光|自由時間|自由行動|休憩|移動|集合|解散|出発|到着|帰国|チェックイン|チェックアウト|空港|駅|hotel|hostel|cafe|café|coffee|lunch|dinner|breakfast|brunch|restaurant|bar|pub|shopping|souvenirs?|free time|rest|break|check[- ]?in|check[- ]?out|airport|station|호텔|카페|점심|저녁|아침|쇼핑|酒店|咖啡|午餐|晚餐|早餐|购物|自由活动)$/i;
+
 // 「モンマルトルを散策」「ルーブルでランチ」→ 場所の名前だけにする
 const cleanPlace = (q) =>
   q
@@ -540,10 +568,16 @@ const server = http.createServer(async (req, res) => {
       const lat = Number(url.searchParams.get('lat'));
       const lng = Number(url.searchParams.get('lng'));
       const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
-      const key = 'n3:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      const key = 'n4:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
       if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
       const lang = String(req.headers['accept-language'] || 'en').slice(0, 40);
-      let g = await nominatim(q, near, lang);
+      const head = cleanPlace(q.split(/\s*,\s*/)[0] || q);
+      if (GENERIC.test(head) || !head) {
+        geo[key] = null;
+        return send(res, 404, { error: 'not found' });
+      }
+      let g = /[\u3040-\u30ff\u4e00-\u9fff]/.test(q) && JA_ADDR.test(q) ? await gsiGeo(q) : null;
+      if (!g) g = await nominatim(q, near, lang);
       if (g === undefined) return send(res, 503, { error: 'lookup failed' });
       // 見つからなければ：動詞を外した名前 → Wikipedia の座標 の順に試す
       const cq = cleanPlace(q);
