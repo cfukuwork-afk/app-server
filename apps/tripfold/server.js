@@ -212,7 +212,7 @@ function wikiGeo(q, near) {
     for (const l of lang) {
       try {
         const u = new URL(`https://${l}.wikipedia.org/w/api.php`);
-        Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates|langlinks', coprimary: 'primary', lllang: 'en', lllimit: '1' }).forEach(([k, v]) => u.searchParams.set(k, v));
+        Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates|langlinks', coprimary: 'primary', lllang: 'en', lllimit: 'max' }).forEach(([k, v]) => u.searchParams.set(k, v));
         const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
         const j = await r.json();
         const pages = Object.values(j?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
@@ -568,7 +568,7 @@ const server = http.createServer(async (req, res) => {
       const lat = Number(url.searchParams.get('lat'));
       const lng = Number(url.searchParams.get('lng'));
       const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
-      const key = 'n4:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      const key = 'n5:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
       if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
       const lang = String(req.headers['accept-language'] || 'en').slice(0, 40);
       const head = cleanPlace(q.split(/\s*,\s*/)[0] || q);
