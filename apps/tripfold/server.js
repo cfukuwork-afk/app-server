@@ -216,11 +216,11 @@ function wikiGeo(q, near) {
         const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
         const j = await r.json();
         const pages = Object.values(j?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-        for (const pg of pages.slice(0, 3)) {
+        for (const [i, pg] of pages.entries()) {
           let c = pg.coordinates?.[0];
           // 日本語版に座標がない記事（例：トレヴィの泉）は、英語版の記事の座標を使う
           const en = pg.langlinks?.[0]?.['*'];
-          if (!c && en && l !== 'en') {
+          if (!c && en && l !== 'en' && i < 3) {
             try {
               const u2 = new URL('https://en.wikipedia.org/w/api.php');
               Object.entries({ action: 'query', format: 'json', titles: en, prop: 'coordinates', coprimary: 'primary', redirects: '1' }).forEach(([k, v]) => u2.searchParams.set(k, v));
@@ -568,7 +568,7 @@ const server = http.createServer(async (req, res) => {
       const lat = Number(url.searchParams.get('lat'));
       const lng = Number(url.searchParams.get('lng'));
       const near = isFinite(lat) && isFinite(lng) && url.searchParams.has('lat') ? { lat, lng } : null;
-      const key = 'n5:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
+      const key = 'n6:' + geoKey(q) + (near ? `@${lat.toFixed(1)},${lng.toFixed(1)}` : '');
       if (key in geo) return geo[key] ? send(res, 200, geo[key]) : send(res, 404, { error: 'not found' });
       const lang = String(req.headers['accept-language'] || 'en').slice(0, 40);
       const head = cleanPlace(q.split(/\s*,\s*/)[0] || q);
