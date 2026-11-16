@@ -314,6 +314,17 @@ const W = {
   it: { trip: 'Viaggio', inviteGone: 'Invito non trovato', inviteGoneSub: 'La condivisione potrebbe essere terminata o il codice è sbagliato.', joinTitle: 'Unisciti a {name}', invited: 'Sei invitato a «{name}»', inviteBody: 'Organizzate insieme prenotazioni, spese e foto in Tripfold.', openJoin: 'Apri nell’app e unisciti', getApp: 'Scarica l’app (App Store)', splitOnly: 'Vedi i conti senza l’app', codeHint: 'Codice per «Unisciti con un codice» nell’app', notFound: 'Non trovato', noSettle: 'Niente da saldare.', paid: 'Pagato', share: 'Quota', splitTitle: 'Conti di {name}', whoPays: 'Chi paga chi ({c}, cambio di oggi)', total: 'Totale', details: 'Dettaglio', none: 'Ancora niente', openApp: 'Apri nell’app', auto: 'Questa pagina è creata automaticamente dal viaggio condiviso. Scompare quando la condivisione termina.' },
   pt: { trip: 'Viagem', inviteGone: 'Convite não encontrado', inviteGoneSub: 'O compartilhamento pode ter terminado ou o código está errado.', joinTitle: 'Entrar em {name}', invited: 'Você foi convidado para “{name}”', inviteBody: 'Planejem juntos reservas, gastos e fotos no Tripfold.', openJoin: 'Abrir no app e entrar', getApp: 'Baixar o app (App Store)', splitOnly: 'Ver o acerto sem o app', codeHint: 'Código para “Entrar com código” no app', notFound: 'Não encontrado', noSettle: 'Nada a acertar.', paid: 'Pagou', share: 'Parte', splitTitle: 'Acerto de {name}', whoPays: 'Quem paga quem ({c}, câmbio de hoje)', total: 'Total', details: 'Detalhes', none: 'Nada ainda', openApp: 'Abrir no app', auto: 'Esta página é criada automaticamente a partir da viagem compartilhada e some quando o compartilhamento termina.' },
 };
+// 割り勘ページから入れる（アプリなし）の言葉
+Object.assign(W["ja"], {"addPay": "立て替えた分を入れる", "addSub": "アプリがなくても、ここから入れられます。入れた分はアプリにも自動で反映されます。", "who": "払った人", "newP": "＋ 新しく名前を追加", "newName": "あなたの名前", "what": "何に（例：夕食、タクシー）", "amount": "金額", "among": "だれの分？（チェックなし＝全員で割る）", "add": "追加する", "added": "追加しました", "undo": "取り消す", "errIn": "金額と払った人を入れてください", "mine": "あなたが入れた分"});
+Object.assign(W["en"], {"addPay": "Add what you paid", "addSub": "No app needed. What you add here shows up in the app automatically.", "who": "Paid by", "newP": "+ Add a new name", "newName": "Your name", "what": "What for (e.g. dinner, taxi)", "amount": "Amount", "among": "Split between (none ticked = everyone)", "add": "Add", "added": "Added", "undo": "Undo", "errIn": "Please enter the amount and who paid", "mine": "Added by you"});
+Object.assign(W["ko"], {"addPay": "낸 돈 입력하기", "addSub": "앱 없이도 여기서 입력할 수 있어요. 입력한 내용은 앱에도 자동으로 반영돼요.", "who": "낸 사람", "newP": "＋ 새 이름 추가", "newName": "내 이름", "what": "무엇에 (예: 저녁, 택시)", "amount": "금액", "among": "누구 몫? (체크 없음 = 전원)", "add": "추가", "added": "추가했어요", "undo": "취소", "errIn": "금액과 낸 사람을 입력해 주세요", "mine": "내가 입력한 것"});
+Object.assign(W["zh-Hans"], {"addPay": "添加你垫付的费用", "addSub": "无需应用，在这里输入即可，会自动同步到应用。", "who": "付款人", "newP": "＋ 添加新名字", "newName": "你的名字", "what": "用途（如晚餐、出租车）", "amount": "金额", "among": "谁分摊？（不勾选＝全员）", "add": "添加", "added": "已添加", "undo": "撤销", "errIn": "请输入金额和付款人", "mine": "你添加的"});
+Object.assign(W["zh-Hant"], {"addPay": "新增你代墊的費用", "addSub": "不用 App，在這裡輸入即可，會自動同步到 App。", "who": "付款人", "newP": "＋ 新增名字", "newName": "你的名字", "what": "用途（如晚餐、計程車）", "amount": "金額", "among": "誰分攤？（不勾選＝全員）", "add": "新增", "added": "已新增", "undo": "撤銷", "errIn": "請輸入金額和付款人", "mine": "你新增的"});
+Object.assign(W["es"], {"addPay": "Añade lo que pagaste", "addSub": "Sin app. Lo que añadas aquí aparece en la app automáticamente.", "who": "Pagó", "newP": "+ Añadir un nombre", "newName": "Tu nombre", "what": "Concepto (p. ej. cena, taxi)", "amount": "Importe", "among": "Entre quién (sin marcar = todos)", "add": "Añadir", "added": "Añadido", "undo": "Deshacer", "errIn": "Indica el importe y quién pagó", "mine": "Añadido por ti"});
+Object.assign(W["fr"], {"addPay": "Ajouter ce que vous avez payé", "addSub": "Sans app. Ce que vous ajoutez ici apparaît automatiquement dans l’app.", "who": "Payé par", "newP": "+ Ajouter un nom", "newName": "Votre nom", "what": "Pour quoi (ex. dîner, taxi)", "amount": "Montant", "among": "Partagé entre (rien coché = tout le monde)", "add": "Ajouter", "added": "Ajouté", "undo": "Annuler", "errIn": "Indiquez le montant et qui a payé", "mine": "Ajouté par vous"});
+Object.assign(W["de"], {"addPay": "Bezahltes eintragen", "addSub": "Ohne App. Was du hier einträgst, erscheint automatisch in der App.", "who": "Bezahlt von", "newP": "+ Neuen Namen hinzufügen", "newName": "Dein Name", "what": "Wofür (z. B. Abendessen, Taxi)", "amount": "Betrag", "among": "Aufteilen auf (nichts angehakt = alle)", "add": "Hinzufügen", "added": "Hinzugefügt", "undo": "Rückgängig", "errIn": "Bitte Betrag und Zahler angeben", "mine": "Von dir eingetragen"});
+Object.assign(W["it"], {"addPay": "Aggiungi quanto hai pagato", "addSub": "Senza app. Ciò che aggiungi qui compare automaticamente nell’app.", "who": "Pagato da", "newP": "+ Aggiungi un nome", "newName": "Il tuo nome", "what": "Per cosa (es. cena, taxi)", "amount": "Importo", "among": "Diviso tra (nessuna spunta = tutti)", "add": "Aggiungi", "added": "Aggiunto", "undo": "Annulla", "errIn": "Inserisci l’importo e chi ha pagato", "mine": "Aggiunto da te"});
+Object.assign(W["pt"], {"addPay": "Adicione o que você pagou", "addSub": "Sem app. O que você adicionar aqui aparece no app automaticamente.", "who": "Pago por", "newP": "+ Adicionar um nome", "newName": "Seu nome", "what": "Para quê (ex.: jantar, táxi)", "amount": "Valor", "among": "Dividir entre (nada marcado = todos)", "add": "Adicionar", "added": "Adicionado", "undo": "Desfazer", "errIn": "Informe o valor e quem pagou", "mine": "Adicionado por você"});
 function langOf(req) {
   const a = String(req.headers['accept-language'] || '').toLowerCase();
   for (const part of a.split(',')) {
@@ -335,7 +346,8 @@ function html(res, status, title, body, lang = 'en') {
 .k{font-size:12px;letter-spacing:.12em;color:#8A8F98;font-weight:700}h1{font-size:26px;margin:4px 0 18px;line-height:1.3}.card{background:#fff;border-radius:18px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #EEE}.row:last-child{border:0}.amt{font-weight:800;white-space:nowrap}.pink{color:#D6336C}.sub{color:#8A8F98;font-size:13px}
 .btn{display:block;text-align:center;background:#15171C;color:#fff;text-decoration:none;font-weight:800;padding:15px;border-radius:14px;margin:10px 0}.btn2{background:#fff;color:#15171C;border:1px solid #DDD}
-.code{font:800 24px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;padding:10px}</style></head><body><main>${body}<p class="sub" style="margin-top:28px">Tripfold</p></main></body></html>`);
+.code{font:800 24px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-align:center;padding:10px}
+input,select{display:block;width:100%;box-sizing:border-box;font:16px inherit;padding:11px 12px;border:1px solid #DDD;border-radius:12px;background:#fff;margin:4px 0 6px}.lb{display:block;font-size:13px;color:#8A8F98;margin-top:8px}.ck{display:inline-flex;align-items:center;gap:4px;margin:4px 12px 4px 0}.ck input{width:auto;display:inline;margin:0}.lnk{background:none;border:0;color:#D6336C;font-weight:700;padding:0;font-size:13px;cursor:pointer}</style></head><body><main>${body}<p class="sub" style="margin-top:28px">Tripfold</p></main></body></html>`);
 }
 const pretty = (c) => c.slice(0, 4) + '-' + c.slice(4);
 
@@ -393,6 +405,105 @@ function settleTrip(t, base, rates) {
     if (cred[j].v < 0.5) j++;
   }
   return { total, paid, owe, pay };
+}
+
+/* ---------- 割り勘ページから支払いを入れる（アプリなし・ワリカンのように） ---------- */
+const WEB_ID = /^w[0-9a-f]{12}$/;
+const cookieIds = (req, code) => {
+  const m = String(req.headers.cookie || '').match(new RegExp(`(?:^|;\\s*)tfw_${code}=([0-9a-fw.]+)`));
+  return m ? m[1].split('.').filter((x) => WEB_ID.test(x)) : [];
+};
+const setCookieIds = (code, ids) => `tfw_${code}=${ids.slice(-60).join('.')}; Path=/s/${code}; Max-Age=${60 * 60 * 24 * 180}; SameSite=Lax; Secure; HttpOnly`;
+function parseForm(buf) {
+  const out = {};
+  for (const [k, v] of new URLSearchParams(buf.toString('utf8'))) (out[k] ??= []).push(v);
+  return out;
+}
+const one = (f, k) => String((f[k] || [])[0] ?? '').trim();
+function webForm(t, w, code, base, req) {
+  const members = t.members || [];
+  const curs = [...new Set([base, ...(t.expenses || []).map((e) => e.currency), ...(t.bookings || []).map((b) => b.currency), 'JPY', 'USD', 'EUR', 'GBP'].filter((c) => /^[A-Z]{3}$/.test(c || '')))];
+  const lastCur = ((t.expenses || [])[0] || {}).currency;
+  const def = curs.includes(lastCur) ? lastCur : base;
+  const mine = cookieIds(req, code);
+  const myRows = (t.expenses || []).filter((e) => mine.includes(e.id)).map((e) => {
+    const by = esc((members.find((m) => m.id === e.paidBy) || {}).name || '?');
+    return `<div class="row"><span>${esc(e.title)}<br><span class="sub">${by}</span></span><span style="text-align:right"><span class="amt">${fmt(e.amount, e.currency)}</span><br>
+<form method="post" action="/s/${code}/del?c=${base}" style="margin:0"><input type="hidden" name="id" value="${e.id}"><button class="lnk">${w.undo}</button></form></span></div>`;
+  }).join('');
+  const lastWho = ((t.expenses || []).find((e) => mine.includes(e.id)) || {}).paidBy;
+  const opts = members.map((m) => `<option value="${esc(m.id)}"${m.id === lastWho ? ' selected' : ''}>${esc(m.name || '?')}</option>`).join('');
+  const checks = members.map((m) => `<label class="ck"><input type="checkbox" name="among" value="${esc(m.id)}"> ${esc(m.name || '?')}</label>`).join('');
+  return `<div class="card" id="add"><div style="font-weight:800;font-size:18px">${w.addPay}</div><div class="sub" style="margin-bottom:10px">${w.addSub}</div>
+<form method="post" action="/s/${code}?c=${base}">
+<label class="lb">${w.who}</label><select name="who" id="who" onchange="document.getElementById('nn').style.display=this.value==='_new'?'block':'none'">${opts}<option value="_new">${w.newP}</option></select>
+<input id="nn" name="newName" maxlength="30" placeholder="${w.newName}" style="display:${members.length ? 'none' : 'block'}">
+<label class="lb">${w.what}</label><input name="title" maxlength="60">
+<label class="lb">${w.amount}</label><div style="display:flex;gap:8px"><input name="amount" inputmode="decimal" required style="flex:1"><select name="cur" style="width:96px">${curs.map((c) => `<option${c === def ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
+${members.length > 1 ? `<label class="lb">${w.among}</label><div>${checks}</div>` : ''}
+<button class="btn" style="width:100%;border:0;font-size:16px;cursor:pointer">${w.add}</button></form></div>
+${myRows ? `<div class="card"><div class="sub">${w.mine}</div>${myRows}</div>` : ''}`;
+}
+async function webAdd(req, res, code, url, ip) {
+  const L = langOf(req);
+  const base = /^[A-Z]{3}$/.test(url.searchParams.get('c') || '') ? url.searchParams.get('c') : 'JPY';
+  if (limited(ip, 'webexp', 60, 60 * 60 * 1000)) return send(res, 429, { error: 'too many' });
+  const f = parseForm(await readBody(req, 16 * 1024));
+  const amount = Number(one(f, 'amount').replace(/[,\s]/g, '').replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)));
+  const cur = one(f, 'cur').toUpperCase();
+  let who = one(f, 'who');
+  const newName = one(f, 'newName').slice(0, 30);
+  const back = (q) => { res.writeHead(303, { Location: `/s/${code}?c=${base}${q}#add`, 'Cache-Control': 'no-store' }); res.end(); };
+  if (!(amount > 0 && amount < 1e9) || !/^[A-Z]{3}$/.test(cur) || (who === '_new' && !newName)) return back('&err=1');
+  let addedId = null;
+  await withLock(code, async () => {
+    const doc = await loadDoc(code);
+    if (!doc) return;
+    const t = doc.trip;
+    t.members = t.members || [];
+    t.expenses = t.expenses || [];
+    if (t.expenses.length >= 2000) return;
+    const at = now();
+    if (who === '_new' || !t.members.some((m) => m.id === who)) {
+      if (!newName) return;
+      const same = t.members.find((m) => (m.name || '').trim() === newName);
+      if (same) who = same.id;
+      else {
+        who = 'w' + crypto.randomBytes(6).toString('hex');
+        t.members.push({ id: who, name: newName, u: at });
+      }
+    }
+    const among = (f.among || []).filter((id) => t.members.some((m) => m.id === id));
+    addedId = 'w' + crypto.randomBytes(6).toString('hex');
+    t.expenses.unshift({ id: addedId, title: one(f, 'title').slice(0, 60) || '—', cat: 'etc', amount: Math.round(amount * 100) / 100, currency: cur, date: new Date(at).toISOString().slice(0, 10), paidBy: who, ...(among.length && among.length < t.members.length ? { splitWith: among } : {}), u: at });
+    doc.rev += 1;
+    doc.updatedAt = at;
+    await writeAtomic(tripFile(code), JSON.stringify(doc));
+  });
+  if (!addedId) return back('&err=1');
+  res.writeHead(303, { Location: `/s/${code}?c=${base}&ok=1#add`, 'Set-Cookie': setCookieIds(code, [...cookieIds(req, code), addedId]), 'Cache-Control': 'no-store' });
+  res.end();
+  void L;
+}
+async function webDel(req, res, code, url) {
+  const base = /^[A-Z]{3}$/.test(url.searchParams.get('c') || '') ? url.searchParams.get('c') : 'JPY';
+  const f = parseForm(await readBody(req, 4 * 1024));
+  const id = one(f, 'id');
+  const mine = cookieIds(req, code);
+  if (mine.includes(id)) {
+    await withLock(code, async () => {
+      const doc = await loadDoc(code);
+      if (!doc) return;
+      const at = now();
+      doc.trip.expenses = (doc.trip.expenses || []).filter((e) => e.id !== id);
+      doc.trip.tomb = { ...(doc.trip.tomb || {}), [id]: at };
+      doc.rev += 1;
+      doc.updatedAt = at;
+      await writeAtomic(tripFile(code), JSON.stringify(doc));
+    });
+  }
+  res.writeHead(303, { Location: `/s/${code}?c=${base}#add`, 'Set-Cookie': setCookieIds(code, mine.filter((x) => x !== id)), 'Cache-Control': 'no-store' });
+  res.end();
 }
 
 /* ---------- 受付 ---------- */
@@ -529,6 +640,13 @@ const server = http.createServer(async (req, res) => {
 <script>setTimeout(function(){location.href=${JSON.stringify(deep)}},300)</script>`, L);
     }
 
+    // 割り勘ページから支払いを入れる・取り消す
+    m = p.match(/^\/s\/([0-9A-Za-z-]{8,9})(\/del)?$/);
+    if (m && req.method === 'POST') {
+      const code = normCode(m[1]);
+      if (!CODE_RE.test(code) || !fs.existsSync(tripFile(code))) return send(res, 404, { error: 'not found' });
+      return m[2] ? await webDel(req, res, code, url) : await webAdd(req, res, code, url, ip);
+    }
     // 割り勘ページ（アプリ不要）
     m = p.match(/^\/s\/([0-9A-Za-z-]{8,9})$/);
     if (m && req.method === 'GET') {
@@ -554,7 +672,9 @@ const server = http.createServer(async (req, res) => {
         .join('');
       const nm = esc(t.name || w.trip);
       return html(res, 200, w.splitTitle.replace('{name}', t.name || w.trip), `<div class="k">SETTLE UP</div><h1>${w.splitTitle.replace('{name}', nm)}</h1>
+${url.searchParams.get('ok') ? `<div class="card" style="background:#E6F7EE">✓ ${w.added}</div>` : ''}${url.searchParams.get('err') ? `<div class="card" style="background:#FDE8EF">${w.errIn}</div>` : ''}
 <div class="card"><div class="sub">${w.whoPays.replace('{c}', base)}</div>${pays}</div>
+${webForm(t, w, code, base, req)}
 <div class="card"><div class="sub">${w.total} ${fmt(st.total, base)}</div>${per}</div>
 <div class="card"><div class="sub">${w.details}</div>${exps || `<p>${w.none}</p>`}</div>
 <a class="btn" href="tripfold://join?c=${code}">${w.openApp}</a><p class="sub">${w.auto}</p>`, L);
