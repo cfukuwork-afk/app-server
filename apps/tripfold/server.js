@@ -454,7 +454,8 @@ async function webAdd(req, res, code, url, ip) {
   let who = one(f, 'who');
   const newName = one(f, 'newName').slice(0, 30);
   const back = (q) => { res.writeHead(303, { Location: `/s/${code}?c=${base}${q}#add`, 'Cache-Control': 'no-store' }); res.end(); };
-  if (!(amount > 0 && amount < 1e9) || !/^[A-Z]{3}$/.test(cur) || (who === '_new' && !newName)) return back('&err=1');
+  // 丸めると0になる金額（0.001など）や、とても大きい金額ははじく
+  if (!(Math.round(amount * 100) / 100 > 0 && amount < 1e9) || !/^[A-Z]{3}$/.test(cur) || (who === '_new' && !newName)) return back('&err=1');
   let addedId = null;
   await withLock(code, async () => {
     const doc = await loadDoc(code);
@@ -468,6 +469,7 @@ async function webAdd(req, res, code, url, ip) {
       if (!newName) return;
       const same = t.members.find((m) => (m.name || '').trim() === newName);
       if (same) who = same.id;
+      else if (t.members.length >= 50) return; // メンバーは50人まで
       else {
         who = 'w' + crypto.randomBytes(6).toString('hex');
         t.members.push({ id: who, name: newName, u: at });
