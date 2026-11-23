@@ -209,8 +209,21 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
   }
 
   /* ---------- 日本語の改行：助詞や「・」のあとで折り返す（単語の途中で切れないように） ---------- */
-  const jp = (x) =>
-    esc(x).replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ]+?)([はがをにでとのへやもから、。・）」』！？])(?=[^、。・）」』！？\s])/g, '$1$2<wbr>');
+  // BudouX（Google の文節区切り）で、文節の切れ目にだけ改行の候補を入れる
+  const budoux = (() => {
+    try {
+      const { Parser } = require('./vendor/budoux/parser.js');
+      const { model } = require('./vendor/budoux/data/models/ja.js');
+      return new Parser(model);
+    } catch {
+      return null;
+    }
+  })();
+  const jp = (x) => {
+    const t = String(x == null ? '' : x);
+    if (!budoux || !/[\u3040-\u30ff\u4e00-\u9fff]/.test(t)) return esc(t);
+    return budoux.parse(t).map(esc).join('<wbr>');
+  };
 
   /* ---------- 画面の言葉 ---------- */
   const W = {
@@ -231,7 +244,7 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
   const FALLBACK = ['/assets/london.jpg', '/assets/paris.jpg', '/assets/kyoto.jpg'];
   const pick = (id) => FALLBACK[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % FALLBACK.length];
 
-  const CSS = `*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;font:16px/1.75 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Segoe UI",sans-serif;color:#15171C;background:#F6F4EF;word-break:keep-all;overflow-wrap:anywhere;line-break:strict}
+  const CSS = `.top .wrap{gap:10px}.logo,.nav a,.lang,.cta{white-space:nowrap;flex:none}.nav{flex-wrap:nowrap}@media(max-width:640px){.nav{gap:8px}.cta{padding:0 12px!important;font-size:13px}.logo{font-size:17px}}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;font:16px/1.75 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Segoe UI",sans-serif;color:#15171C;background:#F6F4EF;word-break:keep-all;overflow-wrap:anywhere;line-break:strict}
 a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 .top{position:sticky;top:0;z-index:50;background:rgba(246,244,239,.9);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid rgba(0,0,0,.06)}
 .top .wrap{display:flex;align-items:center;gap:18px;height:60px}.logo{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:800;font-size:18px;letter-spacing:-.01em}.logo img{width:30px;height:30px;border-radius:8px}
