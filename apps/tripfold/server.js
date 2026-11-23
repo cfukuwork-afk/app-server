@@ -529,8 +529,8 @@ const server = http.createServer(async (req, res) => {
       return fs.createReadStream(f).pipe(res);
     }
     // 紹介ページ・プライバシーポリシー
-    if ((p === '/' || p === '/privacy') && req.method === 'GET') {
-      const f = path.join(__dirname, 'public', p === '/' ? 'index.html' : 'privacy.html');
+    if ((p === '/' || p === '/privacy' || p === '/legal') && req.method === 'GET') {
+      const f = path.join(__dirname, 'public', p === '/' ? 'index.html' : p.slice(1) + '.html');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' });
       return fs.createReadStream(f).pipe(res);
     }
