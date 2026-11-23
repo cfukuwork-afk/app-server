@@ -512,7 +512,7 @@ async function webDel(req, res, code, url) {
 
 /* ---------- 受付 ---------- */
 const wbb = require('./wbb')({ DATA, send, readBody, limited });
-const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE });
+const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE, PORT });
 
 const server = http.createServer(async (req, res) => {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
@@ -523,6 +523,18 @@ const server = http.createServer(async (req, res) => {
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
     if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
+    // サイトの画像（/assets/<名前>.jpg など）
+    if (req.method === 'GET' && /^\/assets\/[a-z0-9_-]+\.(jpg|png|webp|svg)$/.test(p)) {
+      const f = path.join(__dirname, 'public', 'assets', p.slice(8));
+      try {
+        const buf = await fs.promises.readFile(f);
+        const ext = p.split('.').pop();
+        res.writeHead(200, { 'Content-Type': ext === 'svg' ? 'image/svg+xml' : ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg', 'Cache-Control': 'public, max-age=604800' });
+        return res.end(buf);
+      } catch {
+        return send(res, 404, { error: 'not found' });
+      }
+    }
     // 旅行ガイド（/guides と /guides/<slug>）
     if (req.method === 'GET' && (p === '/guides' || /^\/guides\/[a-z0-9-]+$/.test(p))) {
       const name = p === '/guides' ? 'index' : p.slice(8);

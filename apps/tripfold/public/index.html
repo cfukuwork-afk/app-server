@@ -1,15 +1,54 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tripfold — 予約をまとめる旅のしおり</title>
-<meta name="description" content="予約メールやスクショを読み取って、航空券・ホテル・チケットを1つのしおりにまとめる iPhone アプリ。地図・割り勘・天気・オフライン対応。">
-<style>
-*{box-sizing:border-box}body{margin:0;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;color:#15171C;background:#F4F3EF}
-main{max-width:880px;margin:0 auto;padding:40px 20px 60px}.k{font-size:12px;letter-spacing:.14em;font-weight:800;color:#FF5B3A}
-h1{font-size:40px;line-height:1.2;margin:8px 0 14px;letter-spacing:-.5px}.lead{font-size:18px;color:#444}
-.btn{display:inline-block;background:#15171C;color:#fff;text-decoration:none;font-weight:800;padding:14px 22px;border-radius:14px;margin:18px 10px 0 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:36px}
-.card{background:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.card b{display:block;font-size:17px;margin-bottom:4px}
-.lang{float:right;font-size:14px}.foot{margin-top:48px;color:#8C9099;font-size:13px}a{color:#15171C}
-</style><!-- Travelpayouts（提携プログラムのサイト確認用） -->
+<title>Tripfold｜予約メールが旅のしおりになるアプリ</title>
+<meta name="description" content="航空券・ホテル・レンタカー・チケットの予約メールやスクショを送るだけで、地図と移動時間つきの旅のしおりに。割り勘、思い出、みんなのしおりまで。iPhone 向け無料アプリ。">
+<link rel="canonical" href="https://tripfold.160-251-171-249.sslip.io/">
+<meta property="og:title" content="Tripfold｜予約メールが旅のしおりになる"><meta property="og:description" content="予約をまとめて、地図と移動時間つきのしおりに。旅の仲間と一緒に編集。"><meta property="og:image" content="https://tripfold.160-251-171-249.sslip.io/assets/london.jpg"><meta name="twitter:card" content="summary_large_image">
+<meta name="apple-itunes-app" content="app-id=6833397163"><link rel="icon" href="/assets/icon192.png">
+<style>*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;font:16px/1.75 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Segoe UI",sans-serif;color:#15171C;background:#F6F4EF;word-break:keep-all;overflow-wrap:anywhere;line-break:strict}
+a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.top{position:sticky;top:0;z-index:50;background:rgba(246,244,239,.9);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid rgba(0,0,0,.06)}
+.top .wrap{display:flex;align-items:center;gap:18px;height:60px}.logo{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:800;font-size:18px;letter-spacing:-.01em}.logo img{width:30px;height:30px;border-radius:8px}
+.nav{display:flex;gap:18px;margin-left:auto;font-size:14px;font-weight:700}.nav a{text-decoration:none;opacity:.75}.nav a:hover{opacity:1}.cta{background:#15171C;color:#fff!important;opacity:1!important;padding:8px 14px;border-radius:999px}
+@media(max-width:640px){.nav a:not(.cta){display:none}}
+.hero{position:relative;color:#fff;min-height:440px;display:flex;align-items:flex-end;background:#222 center/cover no-repeat}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.15) 40%,rgba(0,0,0,.72) 100%)}
+.hero .wrap{position:relative;padding-top:80px;padding-bottom:36px;width:100%}.hero h1{font-size:clamp(30px,5.4vw,52px);line-height:1.2;margin:10px 0 12px;letter-spacing:-.01em;text-shadow:0 2px 18px rgba(0,0,0,.3)}
+.k{font-size:12px;letter-spacing:.16em;font-weight:800;text-transform:uppercase}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px);padding:5px 12px;border-radius:999px;font-size:14px;font-weight:700}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.btn{display:inline-flex;align-items:center;gap:8px;background:#FF5B3A;color:#fff;text-decoration:none;font-weight:800;padding:13px 20px;border-radius:14px}.btn.w{background:#fff;color:#15171C}.btn.d{background:#15171C}
+.meta{color:#8C9099;font-size:14px}h2{font-size:24px;line-height:1.35;margin:44px 0 14px;letter-spacing:-.01em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}.tile{display:block;background:#fff;border-radius:20px;overflow:hidden;text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.05);transition:transform .2s}.tile:hover{transform:translateY(-3px)}
+.tile .ph{aspect-ratio:4/3;background:#ddd center/cover no-repeat;position:relative}.tile .ph span{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.92);color:#15171C;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+.tile .tx{padding:12px 16px 16px}.tile b{display:block;font-size:17px;line-height:1.4;margin-bottom:4px}
+.card{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.over{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:-26px;position:relative;z-index:2}.over .card{padding:14px 16px}.over b{display:block;font-size:22px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}@media(max-width:900px){.layout{grid-template-columns:1fr}}.side{position:sticky;top:76px}
+.days{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;margin-top:28px;position:sticky;top:60px;background:#F6F4EF;z-index:20}.days a{flex:none;text-decoration:none;font-weight:800;font-size:14px;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #E6E3DC}
+.dayh{display:flex;align-items:baseline;gap:10px;margin:36px 0 12px}.dayh h2{margin:0}.map{height:300px;border-radius:20px;overflow:hidden;margin-bottom:16px;background:#E8E5DE}
+.tl{position:relative}.stop{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px}.tm{font-weight:800;font-size:14px;padding-top:14px;text-align:right;color:#15171C}
+.sc{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05);display:grid;grid-template-columns:minmax(0,1fr) 150px}.sc.noimg{grid-template-columns:1fr}@media(max-width:560px){.sc{grid-template-columns:1fr}.sc .im{order:-1;aspect-ratio:16/9}}
+.sc .bd{padding:14px 16px}.sc .im{background:#ddd center/cover no-repeat;min-height:120px}.sc h3{margin:2px 0 4px;font-size:17px;line-height:1.45}.tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;color:#fff}
+.sc p{margin:6px 0 0;font-size:14px;color:#4A4E57;line-height:1.7}.src{font-size:11px;color:#A0A3AA;text-decoration:none}.bk{display:inline-block;margin-top:8px;font-size:13px;font-weight:800;color:#FF5B3A;text-decoration:none}
+.leg{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;margin:2px 0}.leg div:last-child{border-left:2px dashed #CFCBC2;margin-left:22px;padding:10px 0 10px 18px;font-size:13px;font-weight:700;color:#6B6F78}
+.links a{display:inline-flex;align-items:center;gap:6px;background:#F6F4EF;border-radius:12px;padding:8px 12px;margin:4px 6px 4px 0;text-decoration:none;font-weight:800;font-size:14px}
+.foot{margin-top:60px;background:#15171C;color:#C9CBD1;font-size:13px}.foot .wrap{padding:32px 20px 40px;display:flex;flex-wrap:wrap;gap:12px 22px}.foot a{color:#fff;text-decoration:none}
+input.q{width:100%;font:16px inherit;padding:14px 16px;border:1px solid #E1DED6;border-radius:14px;background:#fff}
+.bighero{position:relative;min-height:620px;color:#fff;display:flex;align-items:center;overflow:hidden;background:#1a1a1a}
+.bighero .bg{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 1fr}.bighero .bg div{background:center/cover no-repeat}
+.bighero:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(10,10,12,.82) 0%,rgba(10,10,12,.55) 50%,rgba(10,10,12,.15) 100%)}
+.bighero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:30px;align-items:center;width:100%;padding-top:60px;padding-bottom:60px}
+.bighero h1{font-size:clamp(34px,6vw,64px);line-height:1.12;margin:12px 0 16px;letter-spacing:-.02em}.bighero p{font-size:18px;opacity:.92;max-width:560px;margin:0}
+.phone{width:min(280px,70vw);margin:0 auto;border-radius:38px;padding:9px;background:#0d0d0f;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08)}.phone img{border-radius:30px}
+@media(max-width:820px){.bighero .wrap{grid-template-columns:1fr}.bighero .phone{display:none}.bighero:before{background:linear-gradient(180deg,rgba(10,10,12,.35),rgba(10,10,12,.85))}}
+.sec{padding:70px 0}.sec h2{font-size:clamp(26px,4vw,38px);margin:8px 0 12px}.lead{font-size:17px;color:#4A4E57;max-width:680px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:28px}.feat .card{padding:22px}.feat .ic{font-size:28px}.feat b{display:block;font-size:18px;margin:8px 0 4px}
+.show{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:30px}@media(max-width:820px){.show{grid-template-columns:repeat(2,1fr)}}.show figure{margin:0}.show figcaption{text-align:center;font-weight:800;font-size:14px;margin-top:10px}.show .phone{width:100%;border-radius:26px;padding:6px}.show .phone img{border-radius:21px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:28px}.step{background:#fff;border-radius:20px;padding:22px;position:relative}.step i{font-style:normal;font-weight:900;font-size:40px;color:#FF5B3A;line-height:1}
+.dests{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}@media(max-width:700px){.dests{grid-template-columns:1fr}}.dest{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:3/4;background:center/cover;color:#fff;text-decoration:none;display:flex;align-items:flex-end}.dest:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.7))}.dest span{position:relative;padding:20px;font-weight:800;font-size:22px}.dest small{display:block;font-size:13px;font-weight:700;opacity:.85}
+.band{background:#15171C;color:#fff;border-radius:28px;padding:40px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center}@media(max-width:700px){.band{grid-template-columns:1fr;padding:28px}}
+.plus{background:linear-gradient(135deg,#FFE5DD,#FFF3D6);border-radius:28px;padding:36px}
+details{background:#fff;border-radius:16px;padding:16px 20px;margin-bottom:10px}summary{font-weight:800;cursor:pointer}
+</style>
+<!-- Travelpayouts（提携プログラムのサイト確認用） -->
 <script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">
   (function () {
       var script = document.createElement("script");
@@ -19,22 +58,72 @@ h1{font-size:40px;line-height:1.2;margin:8px 0 14px;letter-spacing:-.5px}.lead{f
       document.head.appendChild(script);
   })();
 </script>
-</head><body><main>
-<div class="lang"><a href="#en">English</a></div>
-<div class="k">TRIPFOLD</div>
-<h1>予約をまとめる、<br>旅のしおり。</h1>
-<p class="lead">予約メールやスクショを読み取って、航空券・ホテル・レンタカー・チケットを1つのしおりに。<br>地図・割り勘・天気・オフラインまで、旅行中に必要なものを1つのアプリで。</p>
-<a class="btn" href="https://apps.apple.com/app/id6833397163">App Store</a><a class="btn" style="background:#fff;color:#15171C" href="/guides">旅行ガイド / Travel guides</a>
-<div class="grid">
-<div class="card"><b>自動で読み取り</b>メール・スクショ・搭乗券（ウォレット）から日時・予約番号・金額を取り込み。変更やキャンセルのメールも反映。</div>
-<div class="card"><b>しおりと地図</b>日ごとの予定・天気・ピンと移動の線。前の予定からの所要時間の目安も。</div>
-<div class="card"><b>一緒に編集</b>共有コードやURLで同行者と同時に編集。写真もいっしょに。</div>
-<div class="card"><b>お金と割り勘</b>多通貨の出費、レシート読み取り、1日の予算、だれが誰に払うか。</div>
-<div class="card"><b>圏外でも</b>予約・チケットのQRは端末に保存。電波がなくても開けます。</div>
-<div class="card"><b>10の言語</b>日本語・英語・韓国語・中国語・スペイン語・フランス語・ドイツ語・イタリア語・ポルトガル語。</div>
+</head><body>
+<header class="top"><div class="wrap"><a class="logo" href="/"><img src="/assets/icon192.png" alt="">Tripfold</a><nav class="nav"><a href="#features">できること</a><a href="/t">みんなのしおり</a><a href="/guides">旅行ガイド</a><a class="cta" href="https://apps.apple.com/app/id6833397163">アプリを入手</a></nav></div></header>
+
+<section class="bighero"><div class="bg"><div style="background-image:url('/assets/kyoto.jpg')"></div><div style="background-image:url('/assets/paris.jpg')"></div><div style="background-image:url('/assets/london.jpg')"></div></div>
+<div class="wrap"><div><div class="k" style="color:#FFB59F">TRIP PLANNER FOR iPHONE</div>
+<h1>予約メールが、<wbr>そのまま<wbr>旅のしおりに。</h1>
+<p>航空券・ホテル・レンタカー・チケット。<wbr>ばらばらの予約を送るだけで、<wbr>地図と移動時間つきの<wbr>1冊にまとまります。</p>
+<div class="btns"><a class="btn" href="https://apps.apple.com/app/id6833397163"> App Store で無料ダウンロード</a><a class="btn w" href="/t">みんなのしおりを見る</a></div>
+<p style="font-size:13px;margin-top:14px;opacity:.7">アカウント登録・ログイン不要／10の言語に対応</p></div>
+<div class="phone"><img src="/assets/app_plan.jpg" alt="Tripfold のしおり画面"></div></div></section>
+
+<section class="sec" id="features"><div class="wrap"><div class="k" style="color:#FF5B3A">FEATURES</div><h2>旅の準備から、<wbr>思い出まで。</h2>
+<p class="lead">メール・アプリ・スクショに散らばった予約を、<wbr>1つの「旅のしおり」に。<wbr>旅行中に必要なものを、<wbr>1つのアプリで。</p>
+<div class="feat">
+<div class="card"><div class="ic">📩</div><b>送るだけで読み取り</b>予約メールや確認画面のスクショを共有すると、<wbr>日時・予約番号・金額を自動で取り込み。<wbr>変更やキャンセルのメールも反映します。</div>
+<div class="card"><div class="ic">🗺️</div><b>地図と移動時間</b>日ごとの予定を地図に並べて、<wbr>次の場所まで徒歩何分・車で何分かの目安も表示。</div>
+<div class="card"><div class="ic">👫</div><b>みんなで編集</b>共有コードを送るだけで、<wbr>旅の仲間と同時に編集。<wbr>写真もいっしょに残せます。</div>
+<div class="card"><div class="ic">💴</div><b>お金と割り勘</b>多通貨の出費、レシート読み取り、<wbr>だれが誰にいくら払えばいいかまで自動で計算。</div>
+<div class="card"><div class="ic">📶</div><b>圏外でも安心</b>予約やチケットのQRは端末に保存。<wbr>電波がない場所でも開けます。</div>
+<div class="card"><div class="ic">📖</div><b>思い出アルバム</b>日ごとの写真と日記を、<wbr>旅が終わったら1冊のPDFに。</div>
 </div>
-<h2 id="en" style="margin-top:56px">Tripfold — your bookings, folded into one trip plan</h2>
-<p class="lead">Paste a confirmation email, share a screenshot or a Wallet boarding pass, and Tripfold builds your itinerary: flights, hotels, cars and tickets with maps, weather, offline access and cost splitting.</p>
-<div class="foot"><a href="/guides">Travel guides</a> · <a href="/t">みんなのしおり / Trip plans</a> · <a href="/privacy">プライバシーポリシー / Privacy Policy</a> · <a href="/legal">特定商取引法に基づく表記</a> · お問い合わせ：App Store のページのサポートからご連絡ください · © Tripfold<br>
-アプリ内の予約サイトへのリンクには提携リンク（アフィリエイト）が含まれる場合があります / Links to booking sites may be affiliate links.</div>
-</main></body></html>
+<div class="show">
+<figure><div class="phone"><img src="/assets/app_home.jpg" alt="ホーム" loading="lazy"></div><figcaption>次の予定がひと目で</figcaption></figure>
+<figure><div class="phone"><img src="/assets/app_plan.jpg" alt="しおり" loading="lazy"></div><figcaption>日ごとのしおり</figcaption></figure>
+<figure><div class="phone"><img src="/assets/app_bookings.jpg" alt="予約" loading="lazy"></div><figcaption>予約をまとめて</figcaption></figure>
+<figure><div class="phone"><img src="/assets/app_money.jpg" alt="お金" loading="lazy"></div><figcaption>割り勘も自動</figcaption></figure>
+</div></div></section>
+
+<section class="sec" style="background:#fff"><div class="wrap"><div class="k" style="color:#FF5B3A">HOW IT WORKS</div><h2>使い方は、<wbr>3ステップ。</h2>
+<div class="steps">
+<div class="step" style="background:#F6F4EF"><i>1</i><b style="display:block;font-size:18px;margin:10px 0 4px">予約を送る</b>予約メールやスクショを「共有」から Tripfold へ。<wbr>貼り付けでもOK。</div>
+<div class="step" style="background:#F6F4EF"><i>2</i><b style="display:block;font-size:18px;margin:10px 0 4px">しおりができる</b>日付・時間・場所を読み取って、<wbr>日ごとの予定と地図に並べます。</div>
+<div class="step" style="background:#F6F4EF"><i>3</i><b style="display:block;font-size:18px;margin:10px 0 4px">みんなで使う</b>共有コードで仲間と編集。<wbr>旅が終わったら思い出に。</div>
+</div></div></section>
+
+<section class="sec"><div class="wrap"><div class="k" style="color:#FF5B3A">TRIP PLANS</div><h2>みんなのしおり</h2>
+<p class="lead">旅した人が公開した旅程を、<wbr>写真と地図つきで。<wbr>気に入ったら、<wbr>アプリにコピーして自分の旅に。</p>
+<div class="grid" id="plans" style="margin-top:26px"></div>
+<div class="btns"><a class="btn d" href="/t">みんなのしおりをもっと見る</a></div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="k" style="color:#FF5B3A">GUIDES</div><h2>旅行ガイド</h2>
+<div class="dests">
+<a class="dest" href="/guides" style="background-image:url('/assets/london.jpg')"><span><small>イギリス</small>ロンドン</span></a>
+<a class="dest" href="/guides" style="background-image:url('/assets/paris.jpg')"><span><small>フランス</small>パリ</span></a>
+<a class="dest" href="/guides" style="background-image:url('/assets/kyoto.jpg')"><span><small>日本</small>京都</span></a>
+</div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="plus"><div class="k" style="color:#FF5B3A">TRIPFOLD PLUS</div><h2 style="margin-top:6px">もっと思い出を、<wbr>みんなで。</h2>
+<p class="lead" style="color:#15171C">アプリは基本無料。<wbr>共有した旅の写真を何枚でも残したい、<wbr>思い出アルバムを作りたいときは、<wbr>その旅だけの「トリップパス」か、<wbr>年額の「Tripfold Plus」をアプリ内でどうぞ。</p></div></div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><h2>よくある質問</h2>
+<details><summary>無料で使えますか？</summary>はい。<wbr>予約の取り込み、しおり、地図、割り勘、<wbr>2人での共同編集は無料です。</details>
+<details><summary>予約メールの中身はどこに送られますか？</summary>読み取りは iPhone の中で行います。<wbr>共同編集をオンにした旅だけ、<wbr>同期のためにサーバーへ送られます。</details>
+<details><summary>アカウント登録は必要ですか？</summary>不要です。<wbr>アプリを入れてすぐ使えます。</details>
+<details><summary>しおりを公開すると何が見えますか？</summary>予定の名前・何日目か・時刻・乗り物の出発地と到着地だけです。<wbr>予約番号・金額・メモ・住所・写真・一緒に行った人の名前は公開されません。</details>
+</div></section>
+
+<section class="sec" style="padding-top:0"><div class="wrap"><div class="band"><div><div class="k" style="color:#FFB59F">GET THE APP</div><h2 style="margin:6px 0 4px;color:#fff">次の旅を、<wbr>Tripfold で。</h2><p style="margin:0;opacity:.8">iPhone 向け・無料</p></div><a class="btn" href="https://apps.apple.com/app/id6833397163"> App Store で入手</a></div>
+<p class="meta" style="margin-top:30px"><b>English:</b> Tripfold turns your booking emails and screenshots into one trip plan — flights, hotels, cars and tickets with maps, travel times, offline access and cost splitting. <a href="/t">Trip plans</a> · <a href="/guides">Travel guides</a></p></div></section>
+
+<footer class="foot"><div class="wrap"><span>© Tripfold</span><a href="/t">みんなのしおり</a><a href="/guides">旅行ガイド</a><a href="/privacy">プライバシーポリシー</a><a href="/legal">特定商取引法に基づく表記</a><span>予約サイトへのリンクには提携リンクを含みます。</span></div></footer>
+<script>
+fetch('/v1/pub').then(function(r){return r.json()}).then(function(j){var el=document.getElementById('plans');var it=(j.items||[]).slice(0,6);
+if(!it.length){el.innerHTML='<div class="card">まだ公開されたしおりはありません。アプリの共有画面から、最初の1件を公開してみませんか。</div>';return}
+function e(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function f(cc){return String.fromCodePoint.apply(null,cc.split('').map(function(c){return 0x1f1a5+c.charCodeAt(0)}))}
+el.innerHTML=it.map(function(s){return '<a class="tile" href="/t/'+s.id+'"><div class="ph" style="background-image:url(\''+e(s.img)+'\')"><span>'+e((s.countries||[]).map(f).join(' '))+' '+s.days+'日間</span></div><div class="tx"><b>'+e((s.emoji?s.emoji+' ':'')+s.name)+'</b><span class="meta">'+e((s.cities||[]).slice(0,4).join(' · '))+'</span></div></a>'}).join('')}).catch(function(){});
+</script>
+</body></html>
