@@ -217,12 +217,17 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     ja: { list: 'みんなのしおり', listSub: '旅行した人が公開した、そのまま使える旅程です。写真と地図つきで、移動時間までわかります。気に入ったらアプリにコピーして、自分の旅に合わせて直せます。', day: '日目', days: '日間', copy: 'Tripfold にコピーする', getApp: 'App Store で入手', hotel: '宿を探す', do: 'ツアー・チケット', esim: '現地で使える eSIM', by: '作成', pr: '予約サイトへのリンクには提携リンクを含みます。', empty: 'まだ公開されたしおりはありません。アプリの共有画面から、あなたの旅を最初の1件として公開してみませんか。', report: '不適切な内容を報告', note: '作った人のひとこと', more: 'ほかのしおり', walk: '徒歩', car: '車・タクシー', min: '分', about: '目安', spots: 'か所', overview: 'この旅のあらまし', book: 'この旅の予約', credit: '写真・説明：Wikipedia', search: '都市名で探す（例：京都、London）', mapNote: '地図：© OpenStreetMap', type: { flight: '飛行機', train: '電車', bus: 'バス', hotel: '宿', car: 'レンタカー', ticket: 'チケット', food: '食事', plan: '観光', other: 'その他' } },
     en: { list: 'Trip plans by travellers', listSub: 'Real itineraries shared by people who took the trip — with photos, maps and travel times. Copy one into the app and make it yours.', day: 'Day ', days: ' days', copy: 'Copy to Tripfold', getApp: 'Get it on the App Store', hotel: 'Places to stay', do: 'Tours & tickets', esim: 'eSIM for the trip', by: 'by', pr: 'Some booking links are affiliate links.', empty: 'No shared plans yet. Publish your trip from the Share screen in the app.', report: 'Report this page', note: 'From the author', more: 'More plans', walk: 'Walk', car: 'Car / taxi', min: ' min', about: 'approx.', spots: ' spots', overview: 'Trip at a glance', book: 'Book this trip', credit: 'Photos & text: Wikipedia', search: 'Search by city', mapNote: 'Map © OpenStreetMap', type: { flight: 'Flight', train: 'Train', bus: 'Bus', hotel: 'Stay', car: 'Car', ticket: 'Ticket', food: 'Food', plan: 'Sight', other: 'Other' } },
   };
-  const langOf = (req) => (/^ja/i.test(String(req.headers['accept-language'] || '')) ? 'ja' : 'en');
+  const langOf = (req) => {
+    const q = new URL(req.url, 'http://x').searchParams.get('lang');
+    if (q === 'ja' || q === 'en') return q;
+    const ck = (String(req.headers.cookie || '').match(/(?:^|;\s*)lang=(ja|en)/) || [])[1];
+    return ck || (/^ja/i.test(String(req.headers['accept-language'] || '')) ? 'ja' : 'en');
+  };
   const dayLabel = (w, n, L) => (L === 'ja' ? `${n}${w.day}` : `${w.day}${n}`);
   const ICON = { flight: '✈️', train: '🚆', bus: '🚌', hotel: '🛏️', car: '🚗', ticket: '🎟️', food: '🍽️', plan: '📍', other: '•' };
   const COLOR = { flight: '#4C7DF0', train: '#1E9E7A', bus: '#1E9E7A', hotel: '#7B61FF', car: '#4C7DF0', ticket: '#E8456B', food: '#D99A1E', plan: '#1C8FB0', other: '#8C9099' };
   const flag = (cc) => String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0)));
-  const ORIGIN = 'https://tripfold.160-251-171-249.sslip.io';
+  const ORIGIN = 'https://tripfold.net';
   const FALLBACK = ['/assets/london.jpg', '/assets/paris.jpg', '/assets/kyoto.jpg'];
   const pick = (id) => FALLBACK[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % FALLBACK.length];
 
@@ -230,8 +235,8 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
 a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 .top{position:sticky;top:0;z-index:50;background:rgba(246,244,239,.9);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid rgba(0,0,0,.06)}
 .top .wrap{display:flex;align-items:center;gap:18px;height:60px}.logo{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:800;font-size:18px;letter-spacing:-.01em}.logo img{width:30px;height:30px;border-radius:8px}
-.nav{display:flex;gap:18px;margin-left:auto;font-size:14px;font-weight:700}.nav a{text-decoration:none;opacity:.75}.nav a:hover{opacity:1}.cta{background:#15171C;color:#fff!important;opacity:1!important;padding:8px 14px;border-radius:999px}
-@media(max-width:640px){.nav a:not(.cta){display:none}}
+.nav{display:flex;align-items:center;gap:18px;margin-left:auto;font-size:14px;font-weight:700;line-height:1}.nav a{display:inline-flex;align-items:center;height:36px}.lang{display:inline-flex;align-items:center;border:1px solid #DDD9D0;border-radius:999px;overflow:hidden;height:32px}.lang a{height:32px!important;padding:0 10px;font-size:12px;opacity:.6!important}.lang a.on{background:#15171C;color:#fff;opacity:1!important}.nav a{text-decoration:none;opacity:.75}.nav a:hover{opacity:1}.cta{background:#15171C;color:#fff!important;opacity:1!important;padding:0 16px;border-radius:999px}
+@media(max-width:640px){.nav>a:not(.cta){display:none}}
 .hero{position:relative;color:#fff;min-height:440px;display:flex;align-items:flex-end;background:#222 center/cover no-repeat}
 .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.15) 40%,rgba(0,0,0,.72) 100%)}
 .hero .wrap{position:relative;padding-top:80px;padding-bottom:36px;width:100%}.hero h1{font-size:clamp(30px,5.4vw,52px);line-height:1.2;margin:10px 0 12px;letter-spacing:-.01em;text-shadow:0 2px 18px rgba(0,0,0,.3)}
@@ -260,12 +265,13 @@ input.q{width:100%;font:16px inherit;padding:14px 16px;border:1px solid #E1DED6;
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}">${canonical ? `<link rel="canonical" href="${ORIGIN}${canonical}">` : ''}${idx ? '' : '<meta name="robots" content="noindex">'}
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">${image ? `<meta property="og:image" content="${esc(image.startsWith('/') ? ORIGIN + image : image)}"><meta name="twitter:card" content="summary_large_image">` : ''}
 <meta name="apple-itunes-app" content="app-id=6833397163"><link rel="icon" href="/assets/icon192.png"><style>${CSS}</style></head><body>
-<header class="top"><div class="wrap"><a class="logo" href="/"><img src="/assets/icon192.png" alt="">Tripfold</a><nav class="nav"><a href="/t">${L === 'ja' ? 'みんなのしおり' : 'Trip plans'}</a><a href="/guides">${L === 'ja' ? '旅行ガイド' : 'Guides'}</a><a class="cta" href="${APP_STORE}">${L === 'ja' ? 'アプリを入手' : 'Get the app'}</a></nav></div></header>
+<header class="top"><div class="wrap"><a class="logo" href="/"><img src="/assets/icon192.png" alt="">Tripfold</a><nav class="nav"><a href="/t">${L === 'ja' ? 'みんなのしおり' : 'Trip plans'}</a><a href="/guides">${L === 'ja' ? '旅行ガイド' : 'Guides'}</a><span class="lang"><a href="?lang=ja" class="${L === 'ja' ? 'on' : ''}">日本語</a><a href="?lang=en" class="${L === 'en' ? 'on' : ''}">EN</a></span><a class="cta" href="${APP_STORE}">${L === 'ja' ? 'アプリを入手' : 'Get the app'}</a></nav></div></header>
 ${inner}
 <footer class="foot"><div class="wrap"><span>© Tripfold</span><a href="/">${L === 'ja' ? 'トップ' : 'Home'}</a><a href="/t">${esc(W[L].list)}</a><a href="/guides">${L === 'ja' ? '旅行ガイド' : 'Guides'}</a><a href="/privacy">${L === 'ja' ? 'プライバシーポリシー' : 'Privacy'}</a><a href="/legal">特定商取引法に基づく表記</a><span>${esc(W[L].pr)}</span></div></footer></body></html>`;
 
   function page(res, status, { title, desc, canonical, L, body, index: idx = true, image }) {
-    res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300', ...(idx ? {} : { 'X-Robots-Tag': 'noindex' }) });
+    res.setHeader('Set-Cookie', `lang=${L}; Path=/; Max-Age=31536000; SameSite=Lax`);
+    res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, max-age=60', Vary: 'Cookie, Accept-Language', ...(idx ? {} : { 'X-Robots-Tag': 'noindex' }) });
     res.end(shell(L, body, idx, title, desc, canonical, image));
   }
 

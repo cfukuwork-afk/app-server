@@ -545,8 +545,13 @@ const server = http.createServer(async (req, res) => {
     }
     // 紹介ページ・プライバシーポリシー
     if ((p === '/' || p === '/privacy' || p === '/legal') && req.method === 'GET') {
-      const f = path.join(__dirname, 'public', p === '/' ? 'index.html' : p.slice(1) + '.html');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' });
+      // トップは日本語・英語を選べる（?lang= で選ぶと覚える。選んでいなければブラウザの言語）
+      const ql = url.searchParams.get('lang');
+      if (ql === 'ja' || ql === 'en') res.setHeader('Set-Cookie', `lang=${ql}; Path=/; Max-Age=31536000; SameSite=Lax`);
+      const ck = (String(req.headers.cookie || '').match(/(?:^|;\s*)lang=(ja|en)/) || [])[1];
+      const L = ql === 'ja' || ql === 'en' ? ql : ck || (/^ja/i.test(String(req.headers['accept-language'] || '')) ? 'ja' : 'en');
+      const f = path.join(__dirname, 'public', p === '/' ? (L === 'en' ? 'index-en.html' : 'index.html') : p.slice(1) + '.html');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': p === '/' ? 'private, max-age=60' : 'public, max-age=600', ...(p === '/' ? { Vary: 'Cookie, Accept-Language' } : {}) });
       return fs.createReadStream(f).pipe(res);
     }
 
