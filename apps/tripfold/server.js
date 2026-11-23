@@ -145,6 +145,8 @@ function mergeTrip(server, incoming) {
     for (const k of META) out[k] = b[k];
     out.metaU = b.metaU;
   }
+  // トリップパス（だれかが買ったら、その旅は全員ずっと使える。消えない）
+  if (a.pass || b.pass) out.pass = a.pass || b.pass;
   out.id = a.id || b.id;
   out.createdAt = a.createdAt || b.createdAt;
   return out;
