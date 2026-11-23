@@ -510,6 +510,7 @@ async function webDel(req, res, code, url) {
 
 /* ---------- 受付 ---------- */
 const wbb = require('./wbb')({ DATA, send, readBody, limited });
+const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE });
 
 const server = http.createServer(async (req, res) => {
   const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
@@ -721,6 +722,11 @@ ${webForm(t, w, code, base, req)}
 
     // World Budget Book（バックアップ・共有の家計簿）
     if (p.startsWith('/wbb/')) return await wbb(req, res, url, p, ip);
+    // みんなのしおり（公開・一覧・各ページ・アプリへのコピー）
+    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/')) {
+      const r = await pub(req, res, url, p, ip);
+      if (r !== false) return;
+    }
 
     // 2地点の道のり（地図に実際の道を描く）
     if (p === '/v1/geo/route' && req.method === 'GET') {
