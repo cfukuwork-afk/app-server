@@ -26,7 +26,7 @@ const COLLECTIONS = ['bookings', 'expenses', 'checklist', 'members', 'wishes', '
 const META = ['name', 'emoji', 'cover', 'budget'];
 
 /* ---------- 小さな道具 ---------- */
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, x-pub-key' };
 const now = () => Date.now();
 const newCode = () => Array.from(crypto.randomBytes(8), (b) => ALPHABET[b % ALPHABET.length]).join('');
 const normCode = (c) => String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
