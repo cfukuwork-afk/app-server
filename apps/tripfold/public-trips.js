@@ -387,7 +387,7 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
       if (q) all = all.filter((s) => [s.name, ...s.cities].join(' ').toLowerCase().includes(q));
       const body = `<section class="hero" style="min-height:360px;background-image:url('/assets/paris.jpg')"><div class="wrap"><div class="k">TRIP PLANS</div><h1>${jp(w.list)}</h1><p style="max-width:640px;margin:0;font-size:16px;opacity:.95">${jp(w.listSub)}</p></div></section>
 <div class="wrap"><form action="/t" style="margin:-26px 0 26px;position:relative;z-index:2"><input class="q" name="q" value="${esc(q)}" placeholder="${esc(w.search)}"></form>
-${all.length ? `<div class="grid">${all.slice(0, 120).map(tile(L)).join('')}</div>` : `<div class="card">${jp(w.empty)}</div>`}
+${q ? `<p class="meta">${L === 'ja' ? `「${esc(q)}」の検索結果：${all.length}件` : `Results for “${esc(q)}”: ${all.length}`}</p>` : ''}${all.length ? `<div class="grid">${all.slice(0, 120).map(tile(L)).join('')}</div>` : `<div class="card">${q ? (L === 'ja' ? `「${esc(q)}」のしおりはまだありません。<a href="/t">すべてのしおり</a>や<a href="/guides">旅行ガイド</a>もご覧ください。` : `No plans for “${esc(q)}” yet. See <a href="/t">all plans</a> or <a href="/guides">guides</a>.`) : jp(w.empty)}</div>`}
 <div class="btns" style="margin-top:30px"><a class="btn d" href="${APP_STORE}">${esc(w.getApp)}</a></div></div>`;
       return page(res, 200, { title: `${w.list} | Tripfold`, desc: w.listSub, canonical: '/t', L, body, index: !q, image: '/assets/paris.jpg' });
     }
