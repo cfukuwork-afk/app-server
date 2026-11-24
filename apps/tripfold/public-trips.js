@@ -510,6 +510,49 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
 <div class="wrap" style="padding-top:24px">${rows}<div class="card" style="margin-top:20px"><b>${L === 'ja' ? '旅のDNAとは' : 'What is Travel DNA?'}</b><p style="margin:6px 0 0">${L === 'ja' ? jp('Tripfoldに入れた旅（予定の時間・種類・移動・日数・人数など）から、旅の仕方を15の軸で表したものです。分析は端末の中で行われ、このページには数値だけが含まれます。') : 'Fifteen measures of how you travel, worked out on your phone from the trips in Tripfold. This page only contains the numbers.'}</p></div></div>`;
       return page(res, 200, { title: `${type} | Travel DNA | Tripfold`, desc: L === 'ja' ? `旅のタイプは「${type}」。あなたも旅のDNAを調べて、相性を見てみませんか。` : `Travel type: ${type}. Find yours and compare.`, canonical: `/dna/${code}`, L, body, index: false, image: '/assets/paris.jpg' });
     }
+    // 公式しおりの点検（重複・遠すぎる移動・観光地らしくない名前・写真なし など）。数と例だけを返す
+    if (p === '/v1/gen/audit' && req.method === 'GET') {
+      const km = (a, b) => {
+        const R = 6371, t = Math.PI / 180;
+        const x = Math.sin(((b.lat - a.lat) * t) / 2) ** 2 + Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.sin(((b.lng - a.lng) * t) / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(x));
+      };
+      const out = { plans: 0, near: [], longLeg: [], late: [], noJa: 0, noJaEx: [], noPhoto: 0, items: 0, names: {}, thin: [], dupTitle: [] };
+      const SUS = /(building|tower|center|centre|office|plaza|hotel|station|headquarter|bank|exchange|mall|ビル|タワー|センター|本社|駅|ホテル|モール)/i;
+      for (const s0 of (await loadIndex()).values()) {
+        if (!s0.official) continue;
+        const d = await readJ(file(s0.id));
+        if (!d?.enrich) continue;
+        out.plans++;
+        const its = d.trip.items;
+        const g = d.enrich.items || [];
+        const geo = its.map((it, i) => (g[i]?.lat ? { ...g[i], it, i } : null)).filter(Boolean);
+        out.items += geo.length;
+        for (let a = 0; a < geo.length; a++)
+          for (let b = a + 1; b < geo.length; b++)
+            if (km(geo[a], geo[b]) < 0.15 && out.near.length < 60) out.near.push(`${d.trip.name}｜${geo[a].it.title} ≈ ${geo[b].it.title}`);
+        const seen = new Set();
+        its.forEach((it) => {
+          if (it.type === 'food') return;
+          if (seen.has(it.title) && out.dupTitle.length < 40) out.dupTitle.push(`${d.trip.name}｜${it.title}`);
+          seen.add(it.title);
+          if (SUS.test(it.title) || SUS.test(it.en || '')) out.names[it.title] = (out.names[it.title] || 0) + 1;
+          if (it.time && it.time > '21:30' && out.late.length < 30) out.late.push(`${d.trip.name}｜${it.time} ${it.title}`);
+          if (d.trip.citiesJa && it.en && it.title === it.en && /^[\x00-\x7f\u00c0-\u024f\s'’.,()-]+$/.test(it.title)) {
+            out.noJa++;
+            if (out.noJaEx.length < 40) out.noJaEx.push(it.title);
+          }
+        });
+        geo.forEach((x) => !x.img && out.noPhoto++);
+        Object.entries(d.enrich.legs || {}).forEach(([i, l]) => {
+          const lim = d.trip.car ? 120 : l.mode === 'foot' ? 2.6 : 12;
+          if (l.km > lim && out.longLeg.length < 40) out.longLeg.push(`${d.trip.name}｜${its[i]?.title} → ${l.km}km (${l.mode})`);
+        });
+        if (geo.length < its.filter((x) => x.type !== 'food').length * 0.6 && out.thin.length < 30) out.thin.push(d.trip.name);
+      }
+      out.names = Object.entries(out.names).sort((a, b) => b[1] - a[1]).slice(0, 80);
+      return send(res, 200, out);
+    }
     if (p === '/v1/gen/status' && req.method === 'GET') return send(res, 200, { ...gen.status, total: (await loadIndex()).size });
     // SNSで紹介するための一覧（CSV）
     if (p === '/v1/pub/export.csv' && req.method === 'GET') {
