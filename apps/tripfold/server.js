@@ -82,6 +82,7 @@ function withLock(key, fn) {
 /* ---------- 回数制限（いたずら・総当たり対策） ---------- */
 const buckets = new Map();
 function limited(ip, kind, max, windowMs) {
+  if (ip === 'self') return false;
   const key = `${kind}:${ip}`;
   const t = now();
   const b = buckets.get(key);
@@ -515,7 +516,9 @@ const wbb = require('./wbb')({ DATA, send, readBody, limited });
 const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE, PORT });
 
 const server = http.createServer(async (req, res) => {
-  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  // このサーバー自身からの呼び出し（公開しおりの写真・道のりを調べるとき）は、回数制限の対象にしない
+  const self = !req.headers['x-forwarded-for'] && /^(::ffff:)?127\.0\.0\.1$|^::1$/.test(String(req.socket.remoteAddress || ''));
+  const ip = self ? 'self' : String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   const url = new URL(req.url, 'http://x');
   const p = url.pathname.replace(/\/+$/, '') || '/';
   try {

@@ -1,0 +1,42 @@
+[
+{"slug":"dubai-3d","cc":"AE","city":["Dubai","ドバイ"],"emoji":"🏜️","name":["ドバイ 2泊3日","Dubai in 3 days"],"note":["世界一高いビル、砂漠のサファリ、古い街のスーク。","The world's tallest building, a desert safari and the old souks."],"items":[
+[1,"15:00","ticket","ブルジュ・ハリファ","Burj Khalifa","夕暮れの時間は人気なので予約を。","Book sunset slots."],
+[1,"18:00","plan","ドバイ・ファウンテン","Dubai Fountain","夜の噴水ショー。","Evening fountain shows."],
+[1,"19:00","plan","ドバイモール","The Dubai Mall","巨大な水族館もある。","Has a huge aquarium."],
+[2,"10:00","plan","アル・ファヒディ歴史地区","Al Fahidi Historical Neighbourhood","風の塔のある古い家並み。","Old houses with wind towers."],
+[2,"11:30","plan","ドバイ・クリーク","Dubai Creek","アブラ（渡し船）で対岸へ。","Cross on an abra water taxi."],
+[2,"12:00","plan","ゴールド・スーク","Gold Souk","金の店が並ぶ市場。","The gold market."],
+[2,"15:00","ticket","デザートサファリ","Dubai Desert Conservation Reserve","砂丘を4WDで。夕食付きのツアーが多い。","Dune drives, often with dinner."],
+[3,"10:00","plan","パーム・ジュメイラ","Palm Jumeirah","ヤシの木の形の人工島。","The palm-shaped island."],
+[3,"12:00","plan","ブルジュ・アル・アラブ","Burj Al Arab","帆の形のホテル。外から眺めて。","The sail-shaped hotel, seen from the beach."]]},
+{"slug":"marrakech-3d","cc":"MA","city":["Marrakesh","マラケシュ"],"emoji":"🐪","name":["マラケシュ 2泊3日","Marrakech in 3 days"],"note":["迷路のような旧市街。客引きには丁寧に断って、値段は交渉で。","A maze-like medina. Decline touts politely and haggle."],"items":[
+[1,"15:00","plan","ジャマ・エル・フナ広場","Jemaa el-Fnaa","夕方から屋台と大道芸で埋まる。","Fills with food stalls and performers at dusk."],
+[1,"17:00","plan","クトゥビア・モスク","Koutoubia Mosque","街のシンボルの塔。","The city's landmark minaret."],
+[2,"09:00","ticket","マジョレル庭園","Jardin Majorelle","青い建物の庭園。予約を。","The blue villa garden. Book ahead."],
+[2,"12:00","ticket","バイア宮殿","Bahia Palace","タイルと彫刻の宮殿。","Tiles and carved cedar."],
+[2,"14:00","plan","サアード朝の墳墓群","Saadian Tombs","美しい装飾の霊廟。","Ornate royal tombs."],
+[2,"16:00","plan","スーク","Souks of Marrakesh","革製品やランプの市場。","Leather, lanterns and spices."],
+[3,"10:00","ticket","ベン・ユーセフ・マドラサ","Ben Youssef Madrasa","中庭の装飾が見事。","A beautifully decorated courtyard."]]},
+{"slug":"cairo-3d","cc":"EG","city":["Cairo","カイロ"],"emoji":"🐫","name":["カイロ 2泊3日 ピラミッドと博物館","Cairo in 3 days"],"note":["ピラミッドは朝いちばんに。ラクダや写真の客引きには料金を先に確認を。","Visit the pyramids early. Agree prices before camel rides or photos."],"items":[
+[1,"14:00","ticket","エジプト考古学博物館","Egyptian Museum","タハリール広場の歴史ある博物館。","The historic museum on Tahrir Square."],
+[1,"18:00","plan","ハーン・ハリーリ","Khan el-Khalili","夜のバザールでお茶を。","Tea in the evening bazaar."],
+[2,"08:00","ticket","ギザのピラミッド","Giza pyramid complex","3つのピラミッドを見渡せる場所へ。","Head to the panoramic point."],
+[2,"10:30","plan","スフィンクス","Great Sphinx of Giza","ピラミッドのすぐそば。","Right by the pyramids."],
+[2,"13:00","ticket","大エジプト博物館","Grand Egyptian Museum","ツタンカーメンの宝物。","Tutankhamun's treasures."],
+[3,"09:00","plan","ムハンマド・アリ・モスク","Mosque of Muhammad Ali","城塞の上のモスク。","The mosque atop the Citadel."],
+[3,"11:30","plan","オールド・カイロ","Coptic Cairo","古い教会が集まる地区。","The old Christian quarter."]]},
+{"slug":"cape-town-3d","cc":"ZA","city":["Cape Town","ケープタウン"],"emoji":"🐧","name":["ケープタウン 2泊3日","Cape Town in 3 days"],"note":["テーブルマウンテンと喜望峰。風が強い日はロープウェイが止まるので天気を見て。","Table Mountain and the Cape. The cableway closes in high wind."],"items":[
+[1,"14:00","plan","V&Aウォーターフロント","V&A Waterfront","港の買い物と食事の場所。","Harbour shops and restaurants."],
+[1,"17:00","plan","ボ・カープ","Bo-Kaap","カラフルな家並み。","Brightly coloured houses."],
+[2,"08:30","ticket","テーブルマウンテン","Table Mountain","晴れた朝にロープウェイで。","Take the cableway on a clear morning."],
+[2,"12:00","ticket","カーステンボッシュ植物園","Kirstenbosch National Botanical Garden","木の上を歩く橋がある。","The treetop walkway."],
+[3,"09:00","ticket","ボルダーズ・ビーチ","Boulders Beach","ペンギンのいるビーチ。","Penguin beach."],
+[3,"11:30","ticket","喜望峰","Cape of Good Hope","灯台まで登る。","Climb to the lighthouse."]]},
+{"slug":"doha-3d","cc":"QA","city":["Doha","ドーハ"],"emoji":"🕌","name":["ドーハ 2泊3日","Doha in 3 days"],"note":["乗り継ぎのついでにも。美術館とスーク、海沿いのコーニッシュ。","Good for a stopover: museums, souq and the Corniche."],"items":[
+[1,"15:00","plan","スーク・ワキーフ","Souq Waqif","伝統的な市場。夜がにぎやか。","The traditional market, busiest at night."],
+[1,"18:00","plan","コーニッシュ","Doha Corniche","海沿いの散歩道と高層ビルの夜景。","Seafront promenade and skyline."],
+[2,"10:00","ticket","イスラム美術館","Museum of Islamic Art","建物も見どころ。","The building is a highlight too."],
+[2,"14:00","ticket","カタール国立博物館","National Museum of Qatar","砂漠のバラの形の建物。","Shaped like a desert rose."],
+[2,"18:00","plan","ザ・パール","The Pearl-Qatar","人工島のマリーナ。","Marina on an artificial island."],
+[3,"10:00","plan","カタラ文化村","Katara Cultural Village","劇場とモスクのある文化地区。","Arts district with an amphitheatre."]]}
+]

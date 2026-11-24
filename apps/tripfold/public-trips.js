@@ -42,7 +42,12 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     }
     return index;
   }
-  const summary = (d) => ({ id: d.id, name: d.trip.name, emoji: d.trip.emoji, days: d.trip.days, cities: d.trip.cities, countries: d.trip.countries, author: d.author, lang: d.lang, n: d.trip.items.length, updatedAt: d.updatedAt });
+  const summary = (d) => ({ id: d.id, name: d.trip.name, nameEn: d.trip.nameEn, emoji: d.trip.emoji, days: d.trip.days, cities: d.trip.cities, citiesJa: d.trip.citiesJa, countries: d.trip.countries, author: d.author, lang: d.lang, n: d.trip.items.length, updatedAt: d.updatedAt, official: !!d.official });
+  // 公式しおりは日本語と英語の両方を持つ。画面の言語に合わせて出し分ける
+  const nameOf = (t, L) => (L === 'en' && t.nameEn) || t.name;
+  const citiesOf = (t, L) => (L === 'ja' && t.citiesJa?.length ? t.citiesJa : t.cities);
+  const titleOf = (it, L) => (L === 'en' && it.en) || it.title;
+  const noteOf = (t, L) => (L === 'en' && t.noteEn) || t.note;
 
   /* ---------- 受け取った旅を、公開してよい形にする ---------- */
   const TYPES = ['flight', 'train', 'bus', 'hotel', 'car', 'ticket', 'food', 'plan', 'other'];
@@ -143,8 +148,8 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     // 道が引けないときは、まっすぐの距離から目安を出す
     return { mode, min: Math.max(1, Math.round(mode === 'foot' ? km * 14 : km * 2.2 + 5)), km: Math.round(km * 10) / 10, rough: true };
   }
-  async function wiki(q, lang, near, big) {
-    for (const l of [lang, 'en']) {
+  async function wiki(q, lang, near, big, only) {
+    for (const l of only ? [lang] : [lang, 'en']) {
       try {
         const u = new URL(`https://${l}.wikipedia.org/w/api.php`);
         Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '3', prop: 'pageimages|extracts|coordinates|info', inprop: 'url', exintro: '1', explaintext: '1', exsentences: '3', exlimit: '3', piprop: 'thumbnail', pithumbsize: big ? '1600' : '800', coprimary: 'primary' }).forEach(([k, v]) => u.searchParams.set(k, v));
@@ -179,7 +184,14 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
           items.push(null);
           continue;
         }
-        const g = await locate(`${it.title}${t.cities[0] ? ', ' + t.cities[0] : ''}`, center, L);
+        const g = await locate(`${it.en || it.title}${t.cities[0] ? ', ' + t.cities[0] : ''}`, center, d.official ? 'en' : L);
+        if (d.official && g) {
+          // 公式しおり：写真と英語の説明は英語版、日本語の説明は日本語版の Wikipedia から
+          const we = await wiki(it.en || it.title, 'en', g, false, true);
+          const wj = it.title !== it.en ? await wiki(it.title, 'ja', g, false, true) : null;
+          items.push({ lat: g.lat, lng: g.lng, ...(we ? { img: we.img, desc: we.desc, wt: we.title, wu: we.url } : {}), ...(wj ? { img: we?.img || wj.img, dja: wj.desc, wuja: wj.url } : {}) });
+          continue;
+        }
         const w = g && it.type !== 'food' ? await wiki(it.title, L, g, false) : null;
         items.push(g ? { lat: g.lat, lng: g.lng, ...(w ? { img: w.img, desc: w.desc, wt: w.title, wu: w.url } : {}) } : null);
       }
@@ -197,16 +209,66 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
           break;
         }
       }
-      const hero = t.cities[0] ? await wiki(t.cities[0], L, center, true) : null;
+      const hero = t.cities[0] ? await wiki(t.cities[0], d.official ? 'en' : L, center, true) : null;
+      const heroJa = d.official && t.citiesJa?.[0] ? await wiki(t.citiesJa[0], 'ja', center, true, true) : null;
       const now = (await readJ(file(id))) || d;
       if (JSON.stringify(now.trip) !== JSON.stringify(t)) return; // 調べている間に直された
-      now.enrich = { at: Date.now(), items, legs, hero: hero ? { img: hero.img, desc: hero.desc, title: hero.title, url: hero.url } : null };
+      now.enrich = { at: Date.now(), items, legs, hero: hero ? { img: hero.img, desc: hero.desc, title: hero.title, url: hero.url, ...(heroJa ? { dja: heroJa.desc, uja: heroJa.url } : {}) } : null };
       await writeJ(file(id), now);
     } catch {
     } finally {
       running.delete(id);
     }
   }
+
+  /* ---------- 公式しおり（seed/*.json）：起動するたびに、なければ入れる・内容が変わっていれば入れ直す ---------- */
+  // 1件の形：{ slug, cc, city:[英語,日本語], emoji, name:[日本語,英語], note:[日本語,英語], items:[[日,時刻,種類,日本語名,英語名,ひとこと日本語,ひとこと英語], …] }
+  const SEED_DIR = path.join(__dirname, 'seed');
+  const idOf = (slug) => Array.from(crypto.createHash('sha256').update('official:' + slug).digest().subarray(0, 10), (b) => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+  async function seedOfficial() {
+    let files = [];
+    try {
+      files = (await fsp.readdir(SEED_DIR)).filter((f) => f.endsWith('.json')).sort();
+    } catch {
+      return;
+    }
+    const todo = [];
+    let n = 0;
+    for (const f of files) {
+      let plans = [];
+      try {
+        plans = JSON.parse(await fsp.readFile(path.join(SEED_DIR, f), 'utf8'));
+      } catch (e) {
+        console.error('seed', f, e.message);
+        continue;
+      }
+      for (const pl of plans) {
+        n++;
+        const id = idOf(pl.slug);
+        const hash = sha(JSON.stringify(pl)).slice(0, 16);
+        const old = await readJ(file(id));
+        if (old && old.seedHash === hash) {
+          if (!old.enrich) todo.push(id);
+          continue;
+        }
+        const trip = {
+          name: pl.name[0], nameEn: pl.name[1], emoji: pl.emoji, days: Math.max(...pl.items.map((x) => x[0])),
+          cities: [pl.city[0]], citiesJa: [pl.city[1]], countries: [pl.cc], note: pl.note?.[0], noteEn: pl.note?.[1],
+          items: pl.items.map(([day, time, type, ja, en, tj, te]) => ({ type, title: ja, en, day, time: time || undefined, ...(tj || te ? { tip: { ja: tj, en: te } } : {}) })),
+        };
+        // 一覧で新しい順に並ぶので、作った時刻を少しずつずらす（ファイルの順＝一覧の上から下）
+        const at = old?.createdAt || Date.UTC(2026, 10, 20) - n * 37 * 60 * 1000;
+        const d = { id, official: true, seedHash: hash, author: 'Tripfold', lang: 'ja', trip, createdAt: at, updatedAt: at, ...(old?.enrich && JSON.stringify(old.trip.items.map((x) => x.en)) === JSON.stringify(trip.items.map((x) => x.en)) ? { enrich: old.enrich } : {}) };
+        await writeJ(file(id), d);
+        (await loadIndex()).set(id, summary(d));
+        if (!d.enrich) todo.push(id);
+      }
+    }
+    // 写真・道のりは1件ずつ順に調べる（地図の検索は1秒に1回までなので、まとめて走らせない）
+    for (const id of todo) await enrich(id);
+    if (todo.length) console.log('official plans enriched:', todo.length);
+  }
+  setTimeout(() => seedOfficial().catch((e) => console.error('seed', e)), 5000);
 
   /* ---------- 日本語の改行：助詞や「・」のあとで折り返す（単語の途中で切れないように） ---------- */
   // BudouX（Google の文節区切り）で、文節の切れ目にだけ改行の候補を入れる
@@ -267,7 +329,7 @@ a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:1080px;margin:0
 .tl{position:relative}.stop{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px}.tm{font-weight:800;font-size:14px;padding-top:14px;text-align:right;color:#15171C}
 .sc{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05);display:grid;grid-template-columns:minmax(0,1fr) 150px}.sc.noimg{grid-template-columns:1fr}@media(max-width:560px){.sc{grid-template-columns:1fr}.sc .im{order:-1;aspect-ratio:16/9}}
 .sc .bd{padding:14px 16px}.sc .im{background:#ddd center/cover no-repeat;min-height:120px}.sc h3{margin:2px 0 4px;font-size:17px;line-height:1.45}.tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;color:#fff}
-.sc p{margin:6px 0 0;font-size:14px;color:#4A4E57;line-height:1.7}.src{font-size:11px;color:#A0A3AA;text-decoration:none}.bk{display:inline-block;margin-top:8px;font-size:13px;font-weight:800;color:#FF5B3A;text-decoration:none}
+.sc p.tip{color:#15171C;background:#FFF4EF;border-radius:10px;padding:8px 10px;margin-top:8px}.sc p{margin:6px 0 0;font-size:14px;color:#4A4E57;line-height:1.7}.src{font-size:11px;color:#A0A3AA;text-decoration:none}.bk{display:inline-block;margin-top:8px;font-size:13px;font-weight:800;color:#FF5B3A;text-decoration:none}
 .leg{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;margin:2px 0}.leg div:last-child{border-left:2px dashed #CFCBC2;margin-left:22px;padding:10px 0 10px 18px;font-size:13px;font-weight:700;color:#6B6F78}
 .links a{display:inline-flex;align-items:center;gap:6px;background:#F6F4EF;border-radius:12px;padding:8px 12px;margin:4px 6px 4px 0;text-decoration:none;font-weight:800;font-size:14px}
 .foot{margin-top:60px;background:#15171C;color:#C9CBD1;font-size:13px}.foot .wrap{padding:32px 20px 40px;display:flex;flex-wrap:wrap;gap:12px 22px}.foot a{color:#fff;text-decoration:none}
@@ -308,10 +370,13 @@ ${inner}
       const rows = idxs.map(([it, i], k) => {
         const e = en.items?.[i];
         const lk = itemLink(it, d);
+        const dsc = L === 'ja' && e?.dja ? e.dja : d.official && L === 'ja' ? '' : e?.desc;
+        const dsu = L === 'ja' && e?.dja ? e.wuja : e?.wu;
+        const tip = it.tip ? (L === 'en' ? it.tip.en : it.tip.ja) : '';
         const sub = it.from || it.to ? `<div class="meta">${esc([it.from, it.to].filter(Boolean).join(' → '))}</div>` : '';
         const leg = en.legs?.[i];
         const legHtml = leg ? `<div class="leg"><div></div><div>${leg.mode === 'foot' ? '🚶 ' + w.walk : '🚕 ' + w.car} ${leg.rough ? w.about + ' ' : ''}${minTxt(w, leg.min)}${leg.km ? ` · ${leg.km}km` : ''}</div></div>` : idxs[k + 1] ? '<div class="leg"><div></div><div style="padding:6px 0 6px 18px"></div></div>' : '';
-        return `<div class="stop"><div class="tm">${esc(it.time || '')}</div><div class="sc${e?.img ? '' : ' noimg'}"><div class="bd"><span class="tag" style="background:${COLOR[it.type]}">${ICON[it.type]} ${esc(w.type[it.type])}</span><h3>${num.has(i) ? `<span style="color:#FF5B3A">${num.get(i)}.</span> ` : ''}${jp(it.title)}</h3>${sub}${e?.desc ? `<p>${jp(e.desc)}</p><a class="src" href="${esc(e.wu)}" rel="nofollow">${esc(w.credit)}</a>` : ''}${lk ? `<br><a class="bk" rel="sponsored nofollow" href="${esc(lk)}">${L === 'ja' ? 'チケット・ツアーを見る →' : 'See tickets & tours →'}</a>` : ''}</div>${e?.img ? `<div class="im" style="background-image:url('${esc(e.img)}')" role="img" aria-label="${esc(it.title)}"></div>` : ''}</div></div>${legHtml}`;
+        return `<div class="stop"><div class="tm">${esc(it.time || '')}</div><div class="sc${e?.img ? '' : ' noimg'}"><div class="bd"><span class="tag" style="background:${COLOR[it.type]}">${ICON[it.type]} ${esc(w.type[it.type])}</span><h3>${num.has(i) ? `<span style="color:#FF5B3A">${num.get(i)}.</span> ` : ''}${jp(titleOf(it, L))}</h3>${sub}${tip ? `<p class="tip">${jp(tip)}</p>` : ''}${dsc ? `<p>${jp(dsc)}</p><a class="src" href="${esc(dsu)}" rel="nofollow">${esc(w.credit)}</a>` : ''}${lk ? `<br><a class="bk" rel="sponsored nofollow" href="${esc(lk)}">${L === 'ja' ? 'チケット・ツアーを見る →' : 'See tickets & tours →'}</a>` : ''}</div>${e?.img ? `<div class="im" style="background-image:url('${esc(e.img)}')" role="img" aria-label="${esc(titleOf(it, L))}"></div>` : ''}</div></div>${legHtml}`;
       }).join('');
       return `<section id="d${n}"><div class="dayh"><h2>${esc(dayLabel(w, n, L))}</h2><span class="meta">${idxs.length}${L === 'ja' ? '件の予定' : ' plans'}</span></div>${pts.length ? `<div class="map" id="m${n}"></div>` : ''}<div class="tl">${rows}</div></section>`;
     }).join('');
@@ -321,11 +386,11 @@ ${inner}
 <script>(function(){var M=${JSON.stringify(maps)};M.forEach(function(m){var el=document.getElementById(m.id);if(!el||!window.L)return;var map=L.map(el,{scrollWheelZoom:false,attributionControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);var b=[];m.lines.forEach(function(l){if(l.length>1)L.polyline(l,{color:'#FF5B3A',weight:4,opacity:.8}).addTo(map)});var prev=null;m.pts.forEach(function(p){b.push([p[0],p[1]]);L.marker([p[0],p[1]],{icon:L.divIcon({className:'',html:'<div style="width:28px;height:28px;border-radius:50%;background:#FF5B3A;color:#fff;font:800 13px/28px -apple-system,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)">'+p[2]+'</div>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map)});if(b.length===1)map.setView(b[0],15);else map.fitBounds(b,{padding:[34,34]})})})();</script>`
       : '';
     return `<section class="hero" style="background-image:url('${esc(heroImg)}')"><div class="wrap"><a href="/t" class="k" style="color:#fff;text-decoration:none">← ${esc(w.list)}</a>
-<h1>${jp((t.emoji ? t.emoji + ' ' : '') + t.name)}</h1><div class="chips"><span class="chip">${esc(t.countries.map(flag).join(' '))} ${esc(t.days + w.days)}</span>${t.cities.slice(0, 4).map((c) => `<span class="chip">${esc(c)}</span>`).join('')}${d.author ? `<span class="chip">${esc(w.by)} ${esc(d.author)}</span>` : ''}</div>
+<h1>${jp((t.emoji ? t.emoji + ' ' : '') + nameOf(t, L))}</h1><div class="chips"><span class="chip">${esc(t.countries.map(flag).join(' '))} ${esc(t.days + w.days)}</span>${citiesOf(t, L).slice(0, 4).map((c) => `<span class="chip">${esc(c)}</span>`).join('')}${d.author ? `<span class="chip">${esc(w.by)} ${esc(d.author)}</span>` : ''}</div>
 <div class="btns"><a class="btn" href="${deep}">${esc(w.copy)}</a><a class="btn w" href="${APP_STORE}">${esc(w.getApp)}</a></div></div></section>
 <div class="wrap"><div class="over"><div class="card"><span class="meta">${L === 'ja' ? '日数' : 'Length'}</span><b>${esc(t.days + w.days)}</b></div><div class="card"><span class="meta">${L === 'ja' ? '行く場所' : 'Stops'}</span><b>${spots}${esc(w.spots)}</b></div>${moveMin ? `<div class="card"><span class="meta">${L === 'ja' ? '移動の合計（目安）' : 'Getting around'}</span><b>${esc(minTxt(w, moveMin))}</b></div>` : ''}<div class="card"><span class="meta">${L === 'ja' ? '国・都市' : 'Where'}</span><b>${esc(t.countries.map(flag).join(' ') || '—')}</b></div></div>
-${t.note ? `<div class="card" style="margin-top:20px"><div class="k" style="color:#FF5B3A">${esc(w.note)}</div><p style="margin:6px 0 0">${jp(t.note).replace(/\n/g, '<br>')}</p></div>` : ''}
-${en.hero?.desc ? `<div class="card" style="margin-top:16px"><div class="k" style="color:#8C9099">${esc(t.cities[0] || '')}</div><p style="margin:6px 0 4px">${jp(en.hero.desc)}</p><a class="src" href="${esc(en.hero.url)}" rel="nofollow">${esc(w.credit)}</a></div>` : ''}
+${noteOf(t, L) ? `<div class="card" style="margin-top:20px"><div class="k" style="color:#FF5B3A">${esc(d.official ? (L === 'ja' ? 'この旅のポイント' : 'About this plan') : w.note)}</div><p style="margin:6px 0 0">${jp(noteOf(t, L)).replace(/\n/g, '<br>')}</p></div>` : ''}
+${(() => { const hd = L === 'ja' && en.hero?.dja ? en.hero.dja : d.official && L === 'ja' ? '' : en.hero?.desc; return hd ? `<div class="card" style="margin-top:16px"><div class="k" style="color:#8C9099">${esc(citiesOf(t, L)[0] || '')}</div><p style="margin:6px 0 4px">${jp(hd)}</p><a class="src" href="${esc(L === 'ja' && en.hero?.dja ? en.hero.uja : en.hero.url)}" rel="nofollow">${esc(w.credit)}</a></div>` : ''; })()}
 <nav class="days">${days.map((n) => `<a href="#d${n}">${esc(dayLabel(w, n, L))}</a>`).join('')}</nav>
 <div class="layout"><div>${dayHtml}<p class="meta" style="margin-top:14px">${maps.length ? esc(w.mapNote) + ' · ' : ''}${L === 'ja' ? '移動時間は地図上の道のりからの目安です。' : 'Travel times are estimates from map routes.'}</p></div>
 <aside class="side"><h2 style="margin-top:36px">${esc(w.book)}</h2>${links}<a class="btn d" style="width:100%;justify-content:center" href="${deep}">${esc(w.copy)}</a></aside></div>
@@ -340,7 +405,7 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
       return pick(id);
     }
   };
-  const tile = (L) => (s) => `<a class="tile" href="/t/${s.id}"><div class="ph" style="background-image:url('${esc(s.img || heroOf(s.id))}')"><span>${esc(s.countries.map(flag).join(' '))} ${esc(s.days + W[L].days)}</span></div><div class="tx"><b>${jp((s.emoji ? s.emoji + ' ' : '') + s.name)}</b><span class="meta">${esc(s.cities.slice(0, 4).join(' · '))}</span></div></a>`;
+  const tile = (L) => (s) => `<a class="tile" href="/t/${s.id}"><div class="ph" style="background-image:url('${esc(s.img || heroOf(s.id))}')"><span>${esc(s.countries.map(flag).join(' '))} ${esc(s.days + W[L].days)}</span></div><div class="tx"><b>${jp((s.emoji ? s.emoji + ' ' : '') + nameOf(s, L))}</b><span class="meta">${esc(citiesOf(s, L).slice(0, 4).join(' · '))}</span></div></a>`;
 
   /* ---------- 入口 ---------- */
   return async function handle(req, res, url, p, ip) {
@@ -397,7 +462,7 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
       const w = W[L];
       const q = String(url.searchParams.get('q') || '').trim().toLowerCase().slice(0, 40);
       let all = [...(await loadIndex()).values()].sort((a, b) => b.updatedAt - a.updatedAt);
-      if (q) all = all.filter((s) => [s.name, ...s.cities].join(' ').toLowerCase().includes(q));
+      if (q) all = all.filter((s) => [s.name, s.nameEn, ...s.cities, ...(s.citiesJa || [])].filter(Boolean).join(' ').toLowerCase().includes(q));
       const body = `<section class="hero" style="min-height:360px;background-image:url('/assets/paris.jpg')"><div class="wrap"><div class="k">TRIP PLANS</div><h1>${jp(w.list)}</h1><p style="max-width:640px;margin:0;font-size:16px;opacity:.95">${jp(w.listSub)}</p></div></section>
 <div class="wrap"><form action="/t" style="margin:-26px 0 26px;position:relative;z-index:2"><input class="q" name="q" value="${esc(q)}" placeholder="${esc(w.search)}"></form>
 ${q ? `<p class="meta">${L === 'ja' ? `「${esc(q)}」の検索結果：${all.length}件` : `Results for “${esc(q)}”: ${all.length}`}</p>` : ''}${all.length ? `<div class="grid">${all.slice(0, 120).map(tile(L)).join('')}</div>` : `<div class="card">${q ? (L === 'ja' ? `「${esc(q)}」のしおりはまだありません。<a href="/t">すべてのしおり</a>や<a href="/guides">旅行ガイド</a>もご覧ください。` : `No plans for “${esc(q)}” yet. See <a href="/t">all plans</a> or <a href="/guides">guides</a>.`) : jp(w.empty)}</div>`}
@@ -414,8 +479,8 @@ ${q ? `<p class="meta">${L === 'ja' ? `「${esc(q)}」の検索結果：${all.le
       const idx = await loadIndex();
       const others = [...idx.values()].filter((s) => s.id !== d.id && s.cities.some((c) => d.trip.cities.includes(c))).slice(0, 6);
       const t = d.trip;
-      const desc = `${t.cities.join('・')} ${t.days}${W[L].days}: ${t.items.slice(0, 6).map((i) => i.title).join(' / ')}`.slice(0, 160);
-      return page(res, 200, { title: `${t.name} | ${W[L].list}`, desc, canonical: `/t/${d.id}`, L, body: tripBody(d, L, others), image: d.enrich?.hero?.img || pick(d.id) });
+      const desc = `${citiesOf(t, L).join('・')} ${t.days}${W[L].days}: ${t.items.slice(0, 6).map((i) => titleOf(i, L)).join(' / ')}`.slice(0, 160);
+      return page(res, 200, { title: `${nameOf(t, L)} | ${W[L].list}`, desc, canonical: `/t/${d.id}`, L, body: tripBody(d, L, others), image: d.enrich?.hero?.img || pick(d.id) });
     }
     return false;
   };
