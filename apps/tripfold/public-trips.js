@@ -53,6 +53,19 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     L === 'ja'
       ? `${nameOf(s, L)}｜地図と移動時間つきの無料しおりです。アプリにコピーして、そのまま自分の旅に使えます → ${ORIGIN}/t/${s.id}`
       : `${nameOf(s, L)} | a free trip plan with maps and travel times. Copy it into the app and make it yours → ${ORIGIN}/t/${s.id}`;
+  // 旅のDNA（アプリの src/dna.ts と同じ表）
+  const DNA_AXES = [['早起き', 'Early starts'], ['夜型', 'Night outs'], ['詰め込み', 'Packed days'], ['グルメ', 'Food'], ['名所', 'Sights'], ['体験', 'Experiences'], ['都市巡り', 'City hopping'], ['遠出', 'Long haul'], ['鉄道・バス', 'Rail & bus'], ['長旅', 'Long trips'], ['仲間旅', 'Group travel'], ['宿重視', 'Stays'], ['ご褒美', 'Splurge'], ['計画派', 'Planning ahead'], ['記録派', 'Journaling']];
+  const DNA_K = ['early', 'night', 'packed', 'food', 'sights', 'exp', 'cities', 'far', 'rail', 'long', 'group', 'stay', 'spend', 'plan', 'memo'];
+  const ADJ_HI = { early: ['早起きの', 'Early-rising'], night: ['夜を楽しむ', 'After-dark'], packed: ['欲張りな', 'Go-getting'], food: ['食いしん坊の', 'Hungry'], sights: ['名所好きの', 'Landmark-loving'], exp: ['体験重視の', 'Hands-on'], cities: ['都市を渡る', 'Roaming'], far: ['遠くへ飛ぶ', 'Far-flying'], rail: ['鉄道好きの', 'Rail-riding'], long: ['じっくり滞在する', 'Slow-travel'], group: ['みんなで楽しむ', 'Social'], stay: ['宿にこだわる', 'Stay-savvy'], spend: ['ご褒美派の', 'Treat-yourself'], plan: ['計画上手な', 'Well-planned'], memo: ['記録好きの', 'Story-keeping'] };
+  const ADJ_LO = { packed: ['のんびり派の', 'Easy-going'], group: ['ひとり旅の', 'Solo'], spend: ['節約上手な', 'Thrifty'], plan: ['思い立ったら即の', 'Spontaneous'], early: ['朝はゆっくりの', 'Late-morning'] };
+  const NOUN = { early: ['アーリーバード', 'Early Bird'], night: ['ナイトウォーカー', 'Night Walker'], packed: ['スケジュールマスター', 'Schedule Master'], food: ['グルメハンター', 'Food Hunter'], sights: ['名所コレクター', 'Landmark Collector'], exp: ['アドベンチャラー', 'Adventurer'], cities: ['シティホッパー', 'City Hopper'], far: ['ジェットセッター', 'Jet Setter'], rail: ['レイルトラベラー', 'Rail Traveller'], long: ['ノマド', 'Nomad'], group: ['旅のリーダー', 'Trip Leader'], stay: ['ホテルラバー', 'Hotel Lover'], spend: ['ラグジュアリー旅人', 'Luxe Traveller'], plan: ['トラベルプランナー', 'Trip Planner'], memo: ['ストーリーテラー', 'Storyteller'] };
+  const dnaType = (v, ja) => {
+    const order = DNA_K.map((k, i) => ({ k, d: v[i] - 50 })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+    const nounK = order.find((x) => x.d > 0)?.k ?? 'sights';
+    const second = order.find((x) => x.k !== nounK && (x.d > 0 ? ADJ_HI[x.k] : ADJ_LO[x.k]));
+    const adj = second ? (second.d > 0 ? ADJ_HI[second.k] : ADJ_LO[second.k]) : null;
+    return ja ? `${adj ? adj[0] : ''}${NOUN[nounK][0]}` : `${adj ? adj[1] + ' ' : ''}${NOUN[nounK][1]}`;
+  };
   const THEME_NAME = { ja: { classic: '定番', art: '美術館', history: '歴史・建築', nature: '自然・公園', hidden: '穴場', castle: '古城ドライブ', scenic: '絶景ドライブ' }, en: { classic: 'Classics', art: 'Art', history: 'History', nature: 'Nature', hidden: 'Hidden gems', castle: 'Castle drives', scenic: 'Scenic drives' } };
 
   /* ---------- 受け取った旅を、公開してよい形にする ---------- */
@@ -473,6 +486,29 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
         enrich(d.id);
         return send(res, 200, { ok: true, url: `${ORIGIN}/t/${d.id}` });
       }
+    }
+    // 旅のDNA（アプリから共有されたリンク）。コードは15軸の値と季節だけで、個人を特定する情報は含まない
+    let dm = p.match(/^\/dna\/([0-9a-z]{16})$/i);
+    if (dm && req.method === 'GET') {
+      const L = langOf(req);
+      const code = dm[1].toLowerCase();
+      const B36 = '0123456789abcdefghijklmnopqrstuvwxyz';
+      if (!/^[0-9a-z]{15}[0-3]$/.test(code)) return page(res, 404, { title: 'Not found', L, body: '<div class="wrap"><div class="card">Not found</div></div>' });
+      const v = [...code.slice(0, 15)].map((ch) => Math.round((B36.indexOf(ch) / 35) * 100));
+      const type = dnaType(v, L === 'ja');
+      const HU = [18, 42, 200, 8, 160, 280, 225, 250, 120, 30, 330, 190, 48, 265, 350];
+      const seg = 960 / 15;
+      const bars = v.flatMap((x, i) => {
+        const n = 1 + Math.floor(x / 22);
+        const th = Math.max(2, (seg * (0.25 + (x / 100) * 0.55)) / n);
+        const gap = (seg - th * n) / (n + 1);
+        return Array.from({ length: n }, (_, j) => `<rect x="${(i * seg + gap + j * (th + gap)).toFixed(1)}" y="0" width="${th.toFixed(1)}" height="200" rx="3" fill="hsl(${HU[i]},78%,${44 + Math.round((1 - x / 100) * 22)}%)"/>`);
+      }).join('');
+      const rows = v.map((x, i) => `<div style="display:grid;grid-template-columns:96px 1fr 34px;gap:10px;align-items:center;margin:6px 0"><b style="font-size:14px">${esc(L === 'ja' ? DNA_AXES[i][0] : DNA_AXES[i][1])}</b><div style="height:9px;border-radius:5px;background:#E8E5DF"><div style="width:${Math.max(3, x)}%;height:9px;border-radius:5px;background:hsl(${HU[i]},70%,52%)"></div></div><span class="meta" style="text-align:right">${x}</span></div>`).join('');
+      const deep = `tripfold://dna?c=${code}`;
+      const body = `<section style="background:#15171C;color:#fff;padding:48px 0 36px"><div class="wrap"><div class="k">TRAVEL DNA</div><h1 style="color:#fff">${jp(type)}</h1><p style="opacity:.8;margin:6px 0 20px">${L === 'ja' ? jp('友達の旅のタイプです。あなたもTripfoldで自分の旅のDNAを調べて、相性を見てみませんか。') : 'Your friend’s travel type. Find yours in Tripfold and see how you match.'}</p><svg viewBox="0 0 960 200" style="width:100%;height:auto;display:block">${bars}</svg><p class="meta" style="letter-spacing:.2em;margin-top:10px">${code.toUpperCase()}</p><div class="btns" style="margin-top:18px"><a class="btn" href="${deep}">${L === 'ja' ? 'アプリで相性を見る' : 'Compare in the app'}</a><a class="btn w" href="${APP_STORE}">${esc(W[L].getApp)}</a></div></div></section>
+<div class="wrap" style="padding-top:24px">${rows}<div class="card" style="margin-top:20px"><b>${L === 'ja' ? '旅のDNAとは' : 'What is Travel DNA?'}</b><p style="margin:6px 0 0">${L === 'ja' ? jp('Tripfoldに入れた旅（予定の時間・種類・移動・日数・人数など）から、旅の仕方を15の軸で表したものです。分析は端末の中で行われ、このページには数値だけが含まれます。') : 'Fifteen measures of how you travel, worked out on your phone from the trips in Tripfold. This page only contains the numbers.'}</p></div></div>`;
+      return page(res, 200, { title: `${type} | Travel DNA | Tripfold`, desc: L === 'ja' ? `旅のタイプは「${type}」。あなたも旅のDNAを調べて、相性を見てみませんか。` : `Travel type: ${type}. Find yours and compare.`, canonical: `/dna/${code}`, L, body, index: false, image: '/assets/paris.jpg' });
     }
     if (p === '/v1/gen/status' && req.method === 'GET') return send(res, 200, { ...gen.status, total: (await loadIndex()).size });
     // SNSで紹介するための一覧（CSV）

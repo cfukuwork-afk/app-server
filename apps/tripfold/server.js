@@ -751,7 +751,7 @@ ${webForm(t, w, code, base, req)}
     // World Budget Book（バックアップ・共有の家計簿）
     if (p.startsWith('/wbb/')) return await wbb(req, res, url, p, ip);
     // みんなのしおり（公開・一覧・各ページ・アプリへのコピー）
-    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status') {
+    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status' || p.startsWith('/dna/')) {
       const r = await pub(req, res, url, p, ip);
       if (r !== false) return;
     }
