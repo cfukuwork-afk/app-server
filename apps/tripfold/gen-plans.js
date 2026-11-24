@@ -94,7 +94,8 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
   const status = { started: 0, places: 0, done: 0, plans: 0, wiki: 0, err: 0, phase: 'idle' };
 
   async function classes(ids) {
-    const f = path.join(DIR, 'classes.json');
+    // 分類の表が変わったら作り直す（表の内容をファイル名に入れる）
+    const f = path.join(DIR, `classes-${hash(JSON.stringify(ROOTS)).toString('hex').slice(0, 8)}.json`);
     const map = (await readJ(f)) || {};
     const need = ids.filter((c) => !(c in map));
     for (let i = 0; i < need.length; i += 40) {
