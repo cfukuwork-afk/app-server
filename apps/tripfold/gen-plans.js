@@ -215,6 +215,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     const items = [];
     const geo = [];
     const legs = {};
+    const usedNight = new Set();
     daysPts.forEach((pts, d) => {
       let t = d === 0 ? (car ? 12 * 60 : 13 * 60 + 30) : 9 * 60 + 30;
       let lunch = d === 0;
@@ -239,6 +240,26 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
         geo.push({ lat: p.lat, lng: p.lng, wiki: { en: p.enwiki, ja: p.jawiki } });
         t = roundQ(t) + (STAY[p.cat] || 60);
       });
+      // 夕方以降：夕食と、夜景の名所（ライトアップされた橋や塔など）。最終日は午前で終わるので入れない
+      if (d < days - 1 && !car && pts.length) {
+        const last = pts[pts.length - 1];
+        const night = all
+          .filter((x) => ['tower', 'bridge', 'square', 'area'].includes(x.cat) && !chosen.includes(x) && !usedNight.has(x.q) && kmBetween(x, last) < 3)
+          .sort((a, b) => kmBetween(a, last) - kmBetween(b, last))[0];
+        const dt = roundQ(Math.max(t + 15, 18 * 60 + 30));
+        items.push({ type: 'food', title: `夕食（${night ? night.ja || night.en : last.ja || last.en}の近くで）`, en: `Dinner near ${night ? night.en : last.en}`, day: d + 1, time: hm(dt) });
+        geo.push(null);
+        if (night) {
+          usedNight.add(night.q);
+          legs[String(items.length - 2)] = (() => {
+            const km = kmBetween(last, night);
+            const mode = km <= 2.5 ? 'foot' : 'transit';
+            return { mode, min: Math.max(5, Math.round(mode === 'foot' ? km * 14 : km * 3 + 10)), km: Math.round(km * 10) / 10, rough: true };
+          })();
+          items.push({ type: 'plan', title: night.ja || night.en, en: night.en, day: d + 1, time: hm(dt + 90), tip: { ja: '夜はライトアップされた景色がお勧め。帰りの交通手段も確認しておくと安心です。', en: 'Best after dark when it is lit up. Check how you will get back before you go.' }, q: night.q });
+          geo.push({ lat: night.lat, lng: night.lng, wiki: { en: night.enwiki, ja: night.jawiki } });
+        }
+      }
     });
     const th = THEMES[theme];
     const nameJ = place.ja, nameE = place.en;
