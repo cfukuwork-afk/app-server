@@ -579,6 +579,16 @@ ${others.length ? `<h2>${esc(w.more)}</h2><div class="grid">${others.map(tile(L)
       res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="tripfold-plans-${L}.csv"` });
       return res.end(csv);
     }
+    // サイトマップ（トップ・一覧・ガイド・公開しおり）
+    if (p === '/sitemap.xml' && req.method === 'GET') {
+      const gdir = path.join(__dirname, 'public', 'guides');
+      const guides = (await fsp.readdir(gdir).catch(() => [])).filter((f) => f.endsWith('.html')).map((f) => (f === 'index.html' ? '/guides' : '/guides/' + f.slice(0, -5)));
+      const all = [...(await loadIndex()).values()];
+      const urls = ['/', '/t', ...guides, ...all.map((x) => '/t/' + x.id)];
+      const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls.map((u) => `<url><loc>${ORIGIN}${u}</loc></url>`).join('\n') + '\n</urlset>\n';
+      res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(xml);
+    }
     // 一覧（JSON。トップページで使う）
     if (p === '/v1/pub' && req.method === 'GET') {
       const all = [...(await loadIndex()).values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 12);

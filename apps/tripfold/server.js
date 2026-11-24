@@ -534,6 +534,15 @@ const server = http.createServer(async (req, res) => {
 
     stats.hit(req, p, ip);
     if (await stats.route(req, res, p, ip, limited)) return;
+    // 検索エンジン向け（Search Console の所有確認・robots.txt）
+    if (req.method === 'GET' && p === '/google0c47f106904d3106.html') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end('google-site-verification: google0c47f106904d3106.html');
+    }
+    if (req.method === 'GET' && p === '/robots.txt') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+      return res.end('User-agent: *\nDisallow: /v1/\nDisallow: /wbb/\nDisallow: /stats\nDisallow: /s/\nDisallow: /j/\nSitemap: https://tripfold.net/sitemap.xml\n');
+    }
     if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
     // サイトの画像（/assets/<名前>.jpg など）
     if (req.method === 'GET' && /^\/assets\/[a-z0-9_-]+\.(jpg|png|webp|svg)$/.test(p)) {
@@ -754,7 +763,7 @@ ${webForm(t, w, code, base, req)}
     // World Budget Book（バックアップ・共有の家計簿）
     if (p.startsWith('/wbb/')) return await wbb(req, res, url, p, ip);
     // みんなのしおり（公開・一覧・各ページ・アプリへのコピー）
-    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status' || p === '/v1/gen/audit' || p.startsWith('/dna/')) {
+    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status' || p === '/v1/gen/audit' || p.startsWith('/dna/') || p === '/sitemap.xml') {
       const r = await pub(req, res, url, p, ip);
       if (r !== false) return;
     }
