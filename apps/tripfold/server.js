@@ -577,6 +577,22 @@ const server = http.createServer(async (req, res) => {
     }
 
     // 旅行の取得・更新
+    // 一時的な管理用：旅の中身（予定の種類・名前・日時・場所だけ）を検索。鍵はハッシュで照合。使い終わったら削除する
+    if (p === '/v1/admin/find' && req.method === 'GET') {
+      const k = String(url.searchParams.get('k') || '');
+      if (crypto.createHash('sha256').update(k).digest('hex') !== '154a9ecf4b9759d5b5579b436b5e48030800dfeb97c6110ae014a6efa749f98e') return send(res, 404, { error: 'not found' });
+      const q = String(url.searchParams.get('q') || '').toLowerCase();
+      const out = [];
+      for (const f of await fsp.readdir(TRIPS).catch(() => [])) {
+        const raw = await fsp.readFile(path.join(TRIPS, f), 'utf8').catch(() => '');
+        if (!q || !raw.toLowerCase().includes(q)) continue;
+        let t;
+        try { t = JSON.parse(raw); } catch { continue; }
+        const live = (x) => x && !x.deleted;
+        out.push({ name: t.name, bookings: Object.values(t.bookings || {}).filter(live).map((b) => ({ type: b.type, title: b.title, start: b.start, startTime: b.startTime, end: b.end, endTime: b.endTime, from: b.from, to: b.to })), wishes: Object.values(t.wishes || {}).filter(live).map((w) => w.title || w.name) });
+      }
+      return send(res, 200, { n: out.length, trips: out });
+    }
     let m = p.match(/^\/v1\/trips\/([^/]+)$/);
     if (m) {
       const code = normCode(m[1]);
