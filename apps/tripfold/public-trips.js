@@ -310,7 +310,9 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
       for (const [id, s0] of idx) {
         if (!s0.official || keep.has(id)) continue;
         const d = await readJ(file(id));
-        if (!d?.gen || !d.slug || [...failed].some((f) => d.slug.startsWith(`g-${f}-`))) continue;
+        if (!d?.gen) continue;
+        // 取得に失敗した場所のしおりは残す（古いデータには slug が無いので、失敗が1件でもあれば slug 無しも残す）
+        if (d.slug ? [...failed].some((f) => d.slug.startsWith(`g-${f}-`)) : failed.size) continue;
         await fsp.rm(file(id), { force: true });
         idx.delete(id);
         n++;

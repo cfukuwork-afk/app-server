@@ -19,7 +19,7 @@ const hash = (s) => crypto.createHash('sha256').update(s).digest();
 // Wikidata の分類 → このしおりで使う種類
 const ROOTS = {
   Q33506: 'museum', Q207694: 'museum', Q23413: 'castle', Q16560: 'castle', Q57821: 'castle', Q24398318: 'religious', Q1370598: 'religious',
-  Q22698: 'park', Q1107656: 'park', Q23442: 'park', Q174782: 'square', Q15243209: 'area', Q839954: 'ruins', Q4989906: 'monument', Q860861: 'monument',
+  Q22698: 'park', Q1107656: 'park', Q23442: 'park', Q174782: 'square', Q15243209: 'area', Q839954: 'ruins', Q4989906: 'monument', Q860861: 'artwork', Q838948: 'artwork',
   Q12280: 'bridge', Q12518: 'tower', Q1440300: 'tower', Q330284: 'market', Q1076486: 'X', Q11303: 'X', Q1021645: 'X', Q11691: 'X', Q8072: 'X', Q43501: 'zoo', Q2281788: 'zoo',
   Q23397: 'nature', Q8502: 'nature', Q40080: 'nature', Q34038: 'nature', Q46169: 'nature', Q35509: 'nature', Q1006733: 'nature', Q6017969: 'nature',
   Q24354: 'theatre', Q41176: 'building',
@@ -143,6 +143,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, onFinish, log =
       const s = new Set(r.cls.flatMap((c) => map[c] || []));
       let cat = ORDER.find((k) => s.has(k));
       if (cat && s.has('X') && !STRONG.includes(cat)) cat = null;
+      if (s.has('artwork') && (!cat || cat === 'monument')) cat = 'artwork';
       if (!cat && !s.has('X') && s.has('building') && r.sl >= 40) cat = 'building';
       if (!cat) continue;
       if (/^Q\d+$/.test(r.en) || /\b(district|county|province|prefecture|ward|metro|line|station|university|college|school|airport|stadium|arena|hospital|embassy|headquarters|office|exchange|bank|company)\b/i.test(r.en)) continue;
@@ -154,7 +155,9 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, onFinish, log =
     }
     // 美術館の中の作品（「ミロのヴィーナス」など）は、美術館と同じ場所にあるので外す
     const museums = list.filter((p) => p.cat === 'museum');
-    const clean = list.filter((p) => !(['monument', 'building', 'theatre'].includes(p.cat) && museums.some((m) => m !== p && m.sl >= p.sl * 0.5 && kmBetween(m, p) < 0.15)));
+    // 作品（彫刻・絵画）は、近くに美術館があれば館内の展示とみなして外す。屋外の像（小便小僧など）は記念碑として残す
+    list.forEach((p) => { if (p.cat === 'artwork') p.cat = museums.some((m) => kmBetween(m, p) < 0.5) ? 'drop' : 'monument'; });
+    const clean = list.filter((p) => p.cat !== 'drop' && !(['monument', 'building', 'theatre'].includes(p.cat) && museums.some((m) => m !== p && m.sl >= p.sl * 0.5 && kmBetween(m, p) < 0.15)));
     // 同じ名前は1つに。日本語名がある場所を少し優先（日本語の画面で読みやすい）
     const byName = new Map();
     clean.forEach((p) => {
