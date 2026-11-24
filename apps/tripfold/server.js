@@ -524,7 +524,7 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname.replace(/\/+$/, '') || '/';
   // 公式サイトのWebページは tripfold.net に一本化（古い sslip.io のURLから転送。APIや共有ページはそのまま）
   const host = String(req.headers.host || '').toLowerCase();
-  if ((req.method === 'GET' || req.method === 'HEAD') && (/\.sslip\.io$/.test(host) || host === 'www.tripfold.net') && (p === '/' || p === '/t' || p.startsWith('/t/') || p === '/guides' || p.startsWith('/guides/') || p === '/privacy' || p === '/legal')) {
+  if ((req.method === 'GET' || req.method === 'HEAD') && (/\.sslip\.io$/.test(host) || host === 'www.tripfold.net') && (p === '/' || p === '/t' || p.startsWith('/t/') || p.startsWith('/press/') || p === '/guides' || p.startsWith('/guides/') || p === '/privacy' || p === '/legal')) {
     res.writeHead(301, { Location: 'https://tripfold.net' + url.pathname + url.search, 'Cache-Control': 'public, max-age=86400' });
     return res.end();
   }
@@ -541,7 +541,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && p === '/robots.txt') {
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
-      return res.end('User-agent: *\nDisallow: /v1/\nDisallow: /wbb/\nDisallow: /stats\nDisallow: /s/\nDisallow: /j/\nSitemap: https://tripfold.net/sitemap.xml\n');
+      return res.end('User-agent: *\nDisallow: /v1/\nDisallow: /wbb/\nDisallow: /stats\nDisallow: /press/\nDisallow: /s/\nDisallow: /j/\nSitemap: https://tripfold.net/sitemap.xml\n');
     }
     if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
     // サイトの画像（/assets/<名前>.jpg など）
@@ -763,7 +763,7 @@ ${webForm(t, w, code, base, req)}
     // World Budget Book（バックアップ・共有の家計簿）
     if (p.startsWith('/wbb/')) return await wbb(req, res, url, p, ip);
     // みんなのしおり（公開・一覧・各ページ・アプリへのコピー）
-    if (p === '/t' || p.startsWith('/t/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status' || p === '/v1/gen/audit' || p.startsWith('/dna/') || p === '/sitemap.xml') {
+    if (p === '/t' || p.startsWith('/t/') || p.startsWith('/press/') || p === '/v1/pub' || p.startsWith('/v1/pub/') || p === '/v1/gen/status' || p === '/v1/gen/audit' || p.startsWith('/dna/') || p === '/sitemap.xml') {
       const r = await pub(req, res, url, p, ip);
       if (r !== false) return;
     }

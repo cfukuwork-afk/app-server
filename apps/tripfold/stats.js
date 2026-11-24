@@ -9,7 +9,9 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const BOT = /bot|crawl|spider|slurp|preview|fetch|monitor|curl|wget|python|node|axios|headless|lighthouse|facebookexternalhit|embedly|whatsapp|telegram|discord|slack/i;
-const PAGE = /^\/($|t($|\/[0-9a-z]+$)|guides($|\/[a-z0-9-]+$)|dna\/[0-9a-z]+$|privacy$|legal$)/;
+const PAGE = /^\/($|t($|\/[0-9a-z]+$)|press\/[0-9a-z]+$|guides($|\/[a-z0-9-]+$)|dna\/[0-9a-z]+$|privacy$|legal$)/;
+// 予約リンクのクリック（どのサイトへ・どのしおりから）。ここにない名前は数えない
+const BRANDS = ['klook', 'kkday', 'gyg', 'airalo', 'rakuten', 'booking'];
 
 module.exports = function makeStats({ DATA }) {
   const DIR = path.join(DATA, 'stats');
@@ -34,6 +36,10 @@ module.exports = function makeStats({ DATA }) {
     } catch {
       cur = { pv: 0, uv: 0, pages: {}, refs: {}, sp: 0 };
     }
+    if (!cur.clicks) {
+      cur.clicks = {};
+      cur.clickFrom = {};
+    }
     seen = new Set();
   }
   function flush() {
@@ -49,7 +55,7 @@ module.exports = function makeStats({ DATA }) {
     if (!ua || BOT.test(ua) || ip === 'self') return;
     roll();
     cur.pv++;
-    const key = p.startsWith('/t/') ? '/t/*' : p.startsWith('/dna/') ? '/dna/*' : p;
+    const key = p.startsWith('/t/') ? '/t/*' : p.startsWith('/press/') ? '/press/*' : p.startsWith('/dna/') ? '/dna/*' : p;
     cur.pages[key] = (cur.pages[key] || 0) + 1;
     if (p.startsWith('/t/')) cur.pages[p] = (cur.pages[p] || 0) + 1;
     const v = crypto.createHash('sha256').update(salt + ip + ua).digest('hex').slice(0, 16);
@@ -63,6 +69,25 @@ module.exports = function makeStats({ DATA }) {
       ref = new URL(String(req.headers.referer || '')).hostname.replace(/^www\./, '');
     } catch {}
     if (ref && ref !== 'tripfold.net') cur.refs[ref] = (cur.refs[ref] || 0) + 1;
+    dirty = true;
+  }
+
+  // 予約リンクが押されたとき（ページの小さなスクリプトから届く。本文は「サイト名|しおりID」）
+  async function click(req, res, ip, limited) {
+    let s = '';
+    for await (const c of req) {
+      s += c;
+      if (s.length > 100) break;
+    }
+    res.writeHead(204);
+    res.end();
+    const ua = String(req.headers['user-agent'] || '');
+    if (!ua || BOT.test(ua) || limited(ip, 'click', 30, 10 * 60 * 1000)) return;
+    const [b, id] = s.split('|');
+    if (!BRANDS.includes(b)) return;
+    roll();
+    cur.clicks[b] = (cur.clicks[b] || 0) + 1;
+    if (/^[a-z0-9]{10}$/.test(id || '')) cur.clickFrom[id] = (cur.clickFrom[id] || 0) + 1;
     dirty = true;
   }
 
@@ -87,11 +112,16 @@ module.exports = function makeStats({ DATA }) {
     const rows = [];
     const pages = {};
     const refs = {};
+    const clicks = {};
+    const clickFrom = {};
+    let ctotal = 0;
     for (const f of days) {
       const d = f === day + '.json' ? cur : JSON.parse(await fsp.readFile(path.join(DIR, f), 'utf8'));
       rows.push(`<tr><td>${f.slice(0, 10)}</td><td class="n">${d.pv}</td><td class="n">${d.uv}</td><td class="n">${d.uv ? Math.round((d.sp / d.uv) * 100) : 0}%</td></tr>`);
       for (const [k, n] of Object.entries(d.pages)) pages[k] = (pages[k] || 0) + n;
       for (const [k, n] of Object.entries(d.refs)) refs[k] = (refs[k] || 0) + n;
+      for (const [k, n] of Object.entries(d.clicks || {})) (clicks[k] = (clicks[k] || 0) + n), (ctotal += n);
+      for (const [k, n] of Object.entries(d.clickFrom || {})) clickFrom['/t/' + k] = (clickFrom['/t/' + k] || 0) + n;
     }
     const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v}</td></tr>`).join('');
     const t = cur;
@@ -99,11 +129,17 @@ module.exports = function makeStats({ DATA }) {
     res.end(page(`<h1>閲覧数（直近30日）</h1><div class="k"><div>今日のPV<b>${t.pv}</b></div><div>今日の訪問者<b>${t.uv}</b></div></div>
 <h2>日別</h2><table><tr><th>日付</th><th>PV</th><th>訪問者</th><th>スマホ</th></tr>${rows.join('')}</table>
 <h2>よく見られたページ</h2><table>${top(pages, 30)}</table>
+<h2>予約リンクのクリック（合計 ${ctotal}）</h2><table>${top(clicks, 10) || '<tr><td>まだありません</td></tr>'}</table>
+<h2>クリックが多いしおり</h2><table>${top(clickFrom, 15) || '<tr><td>まだありません</td></tr>'}</table>
 <h2>どこから来たか</h2><table>${top(refs, 20) || '<tr><td>まだありません</td></tr>'}</table>
 <p style="color:#888;font-size:12px">ボット・検索エンジンの巡回は除いています。訪問者数は同じ日の同じ端末を1人として数えています。</p>`));
   }
 
   async function route(req, res, p, ip, limited) {
+    if (p === '/v1/c' && req.method === 'POST') {
+      await click(req, res, ip, limited);
+      return true;
+    }
     if (p !== '/stats') return false;
     let saved = null;
     try {
