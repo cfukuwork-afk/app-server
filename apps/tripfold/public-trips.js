@@ -296,11 +296,26 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     onPlan: async (slug, trip, en, n) => {
       const id = idOf(slug);
       const old = await readJ(file(id));
-      if (old && JSON.stringify(old.trip) === JSON.stringify(trip) && old.enrich) return;
+      if (old && JSON.stringify(old.trip) === JSON.stringify(trip) && old.enrich && old.slug === slug) return;
       const at = old?.createdAt || Date.UTC(2026, 10, 10) - n * 7 * 60 * 1000;
-      const d = { id, official: true, gen: true, author: 'Tripfold', lang: 'ja', trip, enrich: en, createdAt: at, updatedAt: at };
+      const d = { id, slug, official: true, gen: true, author: 'Tripfold', lang: 'ja', trip, enrich: en, createdAt: at, updatedAt: at };
       await writeJ(file(id), d);
       (await loadIndex()).set(id, summary(d));
+    },
+    // 今回作られなかった自動生成のしおり（条件に合わなくなったもの）は消す
+    onFinish: async (made, failed) => {
+      const keep = new Set([...made].map(idOf));
+      const idx = await loadIndex();
+      let n = 0;
+      for (const [id, s0] of idx) {
+        if (!s0.official || keep.has(id)) continue;
+        const d = await readJ(file(id));
+        if (!d?.gen || !d.slug || [...failed].some((f) => d.slug.startsWith(`g-${f}-`))) continue;
+        await fsp.rm(file(id), { force: true });
+        idx.delete(id);
+        n++;
+      }
+      if (n) console.log('gen: removed stale', n);
     },
   });
   setTimeout(() => seedOfficial().catch((e) => console.error('seed', e)).then(() => gen.run()).catch((e) => console.error('gen', e)), 5000);

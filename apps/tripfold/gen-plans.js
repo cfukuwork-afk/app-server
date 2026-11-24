@@ -26,6 +26,8 @@ const ROOTS = {
   // 観光の予定に入れないもの
   Q3918: 'X', Q55488: 'X', Q1248784: 'X', Q27686: 'X', Q16917: 'X', Q3914: 'X', Q486972: 'X', Q56061: 'X', Q1190554: 'X', Q5503: 'X', Q483110: 'X',
 };
+// 観光の予定に向かない名前（会社のビル・電波塔の番号付きなど）
+const BAD_NAME = /(\bNTT\b|docomo|ドコモ|maybank|メイバンク|maxis|マクシス|petronas tower 3|ペトロナス・タワー3|\bbank\b|銀行|本社|headquarters|office tower|business|corporate|\bplaza \d|tower \d|タワー\d|ビル$|building$|^clock tower$|^tower$|^広場$|^plaza$|cultural center$|islamic cultural)/i;
 const ORDER = ['museum', 'castle', 'religious', 'ruins', 'park', 'nature', 'market', 'zoo', 'square', 'area', 'bridge', 'tower', 'monument', 'theatre'];
 const STRONG = ['castle', 'museum', 'religious', 'park', 'ruins', 'nature'];
 const STAY = { museum: 120, castle: 100, religious: 45, ruins: 90, park: 60, nature: 90, market: 60, zoo: 150, square: 30, area: 75, bridge: 25, tower: 60, monument: 30, theatre: 30, building: 60 };
@@ -88,7 +90,7 @@ async function wdq(q) {
   return null;
 }
 
-module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.log }) {
+module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, onFinish, log = console.log }) {
   const DIR = path.join(DATA, 'gen');
   const SEED = path.join(__dirname, 'seed');
   fs.mkdirSync(path.join(DIR, 'pois'), { recursive: true });
@@ -144,10 +146,22 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
       if (!cat && !s.has('X') && s.has('building') && r.sl >= 40) cat = 'building';
       if (!cat) continue;
       if (/^Q\d+$/.test(r.en) || /\b(district|county|province|prefecture|ward|metro|line|station|university|college|school|airport|stadium|arena|hospital|embassy|headquarters|office|exchange|bank|company)\b/i.test(r.en)) continue;
+      if (BAD_NAME.test(r.en) || (r.ja && BAD_NAME.test(r.ja))) continue;
+      // 都市名そのもの（「カイロ」など）は予定にしない
+      if ([place.en, place.ja].some((n) => n && (r.en === n || r.ja === n))) continue;
       const { cls, ...rest } = r;
       list.push({ ...rest, cat });
     }
-    return list;
+    // 美術館の中の作品（「ミロのヴィーナス」など）は、美術館と同じ場所にあるので外す
+    const museums = list.filter((p) => p.cat === 'museum');
+    const clean = list.filter((p) => !(['monument', 'building', 'theatre'].includes(p.cat) && museums.some((m) => m !== p && m.sl >= p.sl * 0.5 && kmBetween(m, p) < 0.15)));
+    // 同じ名前は1つに。日本語名がある場所を少し優先（日本語の画面で読みやすい）
+    const byName = new Map();
+    clean.forEach((p) => {
+      const k = (p.ja || p.en).toLowerCase();
+      if (!byName.has(k) || byName.get(k).sl < p.sl) byName.set(k, p);
+    });
+    return [...byName.values()].sort((a, b) => b.sl * (b.ja ? 1.35 : 1) - a.sl * (a.ja ? 1.35 : 1));
   }
 
   // 一番短くなりそうな順番（近い所から順に → 2-opt で交差をほどく）
@@ -260,7 +274,9 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     daysPts.forEach((pts, d) => {
       let t = d === 0 ? (car ? 12 * 60 : 13 * 60) : packed ? 8 * 60 + 30 : 9 * 60;
       let lunch = d === 0;
+      let lastP = pts[0];
       pts.forEach((p, i) => {
+        if (t >= 18 * 60 + 15 && i > 0) return; // 夕方以降は新しい場所を入れない（夕食・夜景へ）
         if (i > 0) {
           const km = kmBetween(pts[i - 1], p);
           const mode = car ? 'car' : km <= 2.5 ? 'foot' : 'transit';
@@ -279,11 +295,12 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
         const pickTip = tip[hash(p.q)[0] % tip.length];
         items.push({ type: TICKET.includes(p.cat) ? 'ticket' : 'plan', title: p.ja || p.en, en: p.en, day: d + 1, time: hm(roundQ(t)), tip: { ja: pickTip[0], en: pickTip[1] }, q: p.q });
         geo.push({ lat: p.lat, lng: p.lng, wiki: { en: p.enwiki, ja: p.jawiki } });
+        lastP = p;
         t = roundQ(t) + Math.max(20, Math.round(((STAY[p.cat] || 60) * stayK) / 5) * 5);
       });
       // 夕方以降：夕食と、夜景の名所（ライトアップされた橋や塔など）。最終日は午前で終わるので入れない
       if (d < days - 1 && !car && pts.length) {
-        const last = pts[pts.length - 1];
+        const last = lastP;
         const night = all
           .filter((x) => ['tower', 'bridge', 'square', 'area'].includes(x.cat) && !chosen.includes(x) && !usedNight.has(x.q) && kmBetween(x, last) < 3)
           .sort((a, b) => kmBetween(a, last) - kmBetween(b, last))[0];
@@ -366,10 +383,17 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     ];
     status.places = places.length;
     let n = 0;
+    const made = new Set();
+    const failed = new Set();
     for (const place of places) {
       try {
         const list = await pois(place);
-        if (!list || list.length < 6) {
+        if (!list) {
+          failed.add(place.slug);
+          status.done++;
+          continue;
+        }
+        if (list.length < 6) {
           status.done++;
           continue;
         }
@@ -396,9 +420,11 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
           });
           const enrich = { at: Date.now(), gen: true, items, legs: p.legs, hero: hero?.img ? { img: hero.img, desc: hero.desc, title: place.en, url: hero.url, ...(ja[place.ja] ? { dja: ja[place.ja].desc, uja: ja[place.ja].url } : {}) } : null };
           await onPlan(p.slug, p.trip, enrich, n++);
+          made.add(p.slug);
           status.plans++;
         }
       } catch (e) {
+        failed.add(place.slug);
         status.err++;
         log('gen', place.slug, e.message);
       }
@@ -406,6 +432,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
       await sleep(1500);
     }
     status.phase = 'done';
+    if (status.done === places.length && onFinish) await onFinish(made, failed);
     log('gen: plans', status.plans);
   }
   return { run, status };
