@@ -191,7 +191,7 @@ function nominatim(q, near, lang) {
       u.searchParams.set('bounded', '1');
     }
     try {
-      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)', 'Accept-Language': lang || 'en' }, signal: AbortSignal.timeout(8000) });
+      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.net)', 'Accept-Language': lang || 'en' }, signal: AbortSignal.timeout(8000) });
       const j = await r.json();
       const g = Array.isArray(j) && j[0];
       return g ? { lat: Math.round(Number(g.lat) * 1e6) / 1e6, lng: Math.round(Number(g.lon) * 1e6) / 1e6, name: String(g.display_name || '').slice(0, 200) } : null;
@@ -216,7 +216,7 @@ function wikiGeo(q, near) {
       try {
         const u = new URL(`https://${l}.wikipedia.org/w/api.php`);
         Object.entries({ action: 'query', format: 'json', generator: 'search', gsrsearch: q, gsrlimit: '6', prop: 'coordinates|langlinks', coprimary: 'primary', lllang: 'en', lllimit: 'max' }).forEach(([k, v]) => u.searchParams.set(k, v));
-        const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
+        const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.net)' }, signal: AbortSignal.timeout(8000) });
         const j = await r.json();
         const pages = Object.values(j?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
         for (const [i, pg] of pages.entries()) {
@@ -276,7 +276,7 @@ function osmRoute(mode, a, b) {
     const prof = mode === 'foot' ? 'routed-foot' : 'routed-car';
     const u = `https://routing.openstreetmap.de/${prof}/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=simplified&geometries=geojson`;
     try {
-      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' }, signal: AbortSignal.timeout(8000) });
+      const r = await fetch(u, { headers: { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.net)' }, signal: AbortSignal.timeout(8000) });
       const j = await r.json();
       const rt = j && j.routes && j.routes[0];
       if (!rt) return null;
@@ -521,6 +521,12 @@ const server = http.createServer(async (req, res) => {
   const ip = self ? 'self' : String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
   const url = new URL(req.url, 'http://x');
   const p = url.pathname.replace(/\/+$/, '') || '/';
+  // 公式サイトのWebページは tripfold.net に一本化（古い sslip.io のURLから転送。APIや共有ページはそのまま）
+  const host = String(req.headers.host || '').toLowerCase();
+  if ((req.method === 'GET' || req.method === 'HEAD') && (/\.sslip\.io$/.test(host) || host === 'www.tripfold.net') && (p === '/' || p === '/t' || p.startsWith('/t/') || p === '/guides' || p.startsWith('/guides/') || p === '/privacy' || p === '/legal')) {
+    res.writeHead(301, { Location: 'https://tripfold.net' + url.pathname + url.search, 'Cache-Control': 'public, max-age=86400' });
+    return res.end();
+  }
   try {
     if (req.method === 'OPTIONS') return send(res, 204, undefined);
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });

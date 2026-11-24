@@ -117,7 +117,7 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
   /* ---------- 写真・説明・道のり（公開したあとに、サーバーが少しずつ調べて付け足す） ---------- */
   // 場所：このサーバーの「場所探し」を使う／道のり：このサーバーの「道のり」を使う／写真と説明：Wikipedia
   const LOCAL = `http://127.0.0.1:${PORT}`;
-  const UA = { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.160-251-171-249.sslip.io)' };
+  const UA = { 'User-Agent': 'Tripfold/1.0 (travel planner app; https://tripfold.net)' };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const SPOT = ['ticket', 'plan', 'food', 'other', 'hotel'];
   const kmBetween = (a, b) => Math.hypot(a.lat - b.lat, (a.lng - b.lng) * Math.cos((a.lat * Math.PI) / 180)) * 111;
