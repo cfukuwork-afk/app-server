@@ -513,6 +513,7 @@ async function webDel(req, res, code, url) {
 
 /* ---------- 受付 ---------- */
 const wbb = require('./wbb')({ DATA, send, readBody, limited });
+const stats = require('./stats')({ DATA });
 const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE, PORT });
 
 const server = http.createServer(async (req, res) => {
@@ -531,6 +532,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, undefined);
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
+    stats.hit(req, p, ip);
+    if (await stats.route(req, res, p, ip, limited)) return;
     if (p === '/health') return send(res, 200, { ok: true, app: 'tripfold', time: new Date().toISOString() });
     // サイトの画像（/assets/<名前>.jpg など）
     if (req.method === 'GET' && /^\/assets\/[a-z0-9_-]+\.(jpg|png|webp|svg)$/.test(p)) {
