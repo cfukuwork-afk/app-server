@@ -20,7 +20,7 @@ const hash = (s) => crypto.createHash('sha256').update(s).digest();
 const ROOTS = {
   Q33506: 'museum', Q207694: 'museum', Q23413: 'castle', Q16560: 'castle', Q57821: 'castle', Q24398318: 'religious', Q1370598: 'religious',
   Q22698: 'park', Q1107656: 'park', Q23442: 'park', Q174782: 'square', Q15243209: 'area', Q839954: 'ruins', Q4989906: 'monument', Q860861: 'monument',
-  Q12280: 'bridge', Q12518: 'tower', Q11303: 'tower', Q37654: 'market', Q43501: 'zoo', Q2281788: 'zoo',
+  Q12280: 'bridge', Q12518: 'tower', Q1440300: 'tower', Q330284: 'market', Q1076486: 'X', Q11303: 'X', Q1021645: 'X', Q11691: 'X', Q8072: 'X', Q43501: 'zoo', Q2281788: 'zoo',
   Q23397: 'nature', Q8502: 'nature', Q40080: 'nature', Q34038: 'nature', Q46169: 'nature', Q35509: 'nature', Q1006733: 'nature', Q6017969: 'nature',
   Q24354: 'theatre', Q41176: 'building',
   // 観光の予定に入れないもの
@@ -97,8 +97,8 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     const f = path.join(DIR, 'classes.json');
     const map = (await readJ(f)) || {};
     const need = ids.filter((c) => !(c in map));
-    for (let i = 0; i < need.length; i += 150) {
-      const part = need.slice(i, i + 150);
+    for (let i = 0; i < need.length; i += 40) {
+      const part = need.slice(i, i + 40);
       const rows = await wdq(`SELECT ?c ?root WHERE { VALUES ?c { ${part.map((c) => 'wd:' + c).join(' ')} } VALUES ?root { ${Object.keys(ROOTS).map((c) => 'wd:' + c).join(' ')} } ?c wdt:P279* ?root . }`);
       if (!rows) continue;
       part.forEach((c) => (map[c] = []));
@@ -115,27 +115,36 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
 
   async function pois(place) {
     const f = path.join(DIR, 'pois', place.slug + '.json');
-    const cached = await readJ(f);
-    if (cached && Date.now() - cached.at < 60 * 864e5) return cached.list;
-    const rows = await wdq(sparql(place.lat, place.lng, place.km, place.region ? 6 : 10));
-    if (!rows) return cached?.list || null;
-    const map = await classes([...new Set(rows.flatMap((b) => b.cls.value.split(',')))]);
-    const seen = new Set();
+    let cached = await readJ(f);
+    if (!cached || !cached.raw || Date.now() - cached.at > 60 * 864e5) {
+      const rows = await wdq(sparql(place.lat, place.lng, place.km, place.region ? 6 : 10));
+      if (rows) {
+        const seen = new Set();
+        const raw = [];
+        for (const b of rows) {
+          const q = b.item.value.split('/').pop();
+          if (seen.has(q)) continue;
+          seen.add(q);
+          raw.push({ q, en: b.en.value, ja: b.ja?.value || null, sl: Number(b.sl.value), lat: Number(b.lat.value), lng: Number(b.lon.value), cls: b.cls.value.split(','), enwiki: b.enwiki?.value || null, jawiki: b.jawiki?.value || null });
+        }
+        cached = { at: Date.now(), raw };
+        await writeJ(f, cached);
+      }
+    }
+    if (!cached?.raw) return null;
+    // 分類は毎回つけ直す（分類表が後から埋まることがあるため）
+    const map = await classes([...new Set(cached.raw.flatMap((r) => r.cls))]);
     const list = [];
-    for (const b of rows) {
-      const q = b.item.value.split('/').pop();
-      if (seen.has(q)) continue;
-      seen.add(q);
-      const s = new Set(b.cls.value.split(',').flatMap((c) => map[c] || []));
+    for (const r of cached.raw) {
+      const s = new Set(r.cls.flatMap((c) => map[c] || []));
       let cat = ORDER.find((k) => s.has(k));
       if (cat && s.has('X') && !STRONG.includes(cat)) cat = null;
-      if (!cat) cat = s.has('X') ? null : s.has('building') ? 'building' : null;
+      if (!cat && !s.has('X') && s.has('building') && r.sl >= 40) cat = 'building';
       if (!cat) continue;
-      const en = b.en.value;
-      if (/^Q\d+$/.test(en) || /\b(district|county|province|metro|line|station|university|airport|stadium|arena)\b/i.test(en)) continue;
-      list.push({ q, en, ja: b.ja?.value || null, sl: Number(b.sl.value), lat: Number(b.lat.value), lng: Number(b.lon.value), cat, enwiki: b.enwiki?.value || null, jawiki: b.jawiki?.value || null });
+      if (/^Q\d+$/.test(r.en) || /\b(district|county|province|prefecture|ward|metro|line|station|university|college|school|airport|stadium|arena|hospital|embassy|headquarters|office|exchange|bank|company)\b/i.test(r.en)) continue;
+      const { cls, ...rest } = r;
+      list.push({ ...rest, cat });
     }
-    await writeJ(f, { at: Date.now(), list });
     return list;
   }
 
@@ -167,12 +176,12 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     return out;
   }
 
-  function pickPool(list, wanted, n, avoid) {
+  function pickPool(list, wanted, n, avoid, capMul = 1) {
     const out = [];
     const used = {};
     const tryAdd = (p) => {
       if (out.length >= n || out.includes(p) || avoid?.has(p.q)) return;
-      if ((used[p.cat] || 0) >= (CAP[p.cat] ?? 99)) return;
+      if ((used[p.cat] || 0) >= Math.ceil((CAP[p.cat] ?? 99) * capMul)) return;
       if (out.some((o) => kmBetween(o, p) < 0.08)) return; // ほぼ同じ場所（城と同じ敷地の博物館など）は1つに
       used[p.cat] = (used[p.cat] || 0) + 1;
       out.push(p);
@@ -197,20 +206,46 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
       castle: ['castle', 'ruins', 'religious'],
       scenic: ['nature', 'park', 'tower', 'castle'],
     }[theme];
-    let chosen = pickPool(all, want, N, theme === 'hidden' ? new Set(top) : null);
+    const capMul = Math.max(1, days / 2);
+    const avoid = theme === 'hidden' ? new Set(top) : null;
+    // 候補：テーマに合う場所を多めに。足りなければ定番で補う
+    let pool = pickPool(all, want, N * 3, avoid, capMul * 2);
     const core = theme === 'classic' || theme === 'hidden' ? N : Math.ceil(N * 0.6);
-    if (chosen.length < Math.min(core, N - 2)) return null; // テーマに合う場所が足りない
-    if (chosen.length < N) chosen = chosen.concat(pickPool(all.filter((p) => !chosen.includes(p)), ORDER, N - chosen.length, theme === 'hidden' ? new Set(top) : null));
-    if (chosen.length < N - 2) return null;
-    const route = order(chosen, place);
-    // 順番どおりに日へ分ける（近い所が同じ日になる）
+    if (pool.length < Math.min(core, N - 2)) return null; // テーマに合う場所が足りない
+    if (pool.length < N * 2) pool = pool.concat(pickPool(all.filter((p) => !pool.includes(p)), ORDER, N * 2 - pool.length, avoid, capMul * 2));
+    // 日ごとに「その日の中心（有名な場所）」を決め、近い場所だけで1日を組む → 移動の無駄が少ない
+    const reach = car ? 45 : 2.2;
+    const used = new Set();
+    const usedCat = {};
+    const capOk = (p) => (usedCat[p.cat] || 0) < Math.ceil((CAP[p.cat] ?? 99) * capMul);
+    const take = (p) => {
+      used.add(p.q);
+      usedCat[p.cat] = (usedCat[p.cat] || 0) + 1;
+    };
+    const anchors = [];
     const daysPts = [];
-    let k = 0;
     for (let d = 0; d < days; d++) {
-      const take = d === days - 1 ? route.length - k : Math.min(caps[d], route.length - k);
-      daysPts.push(route.slice(k, k + take));
-      k += take;
+      const free = pool.filter((p) => !used.has(p.q) && capOk(p));
+      const anchor = free.find((p) => anchors.every((a) => kmBetween(a, p) > reach * 0.9)) || free[0];
+      if (!anchor) return null;
+      anchors.push(anchor);
+      take(anchor);
+      const group = [anchor];
+      for (const r of [reach, reach * 1.8]) {
+        const near = pool
+          .filter((p) => !used.has(p.q) && capOk(p) && kmBetween(anchor, p) <= r && !group.some((g) => kmBetween(g, p) < 0.08))
+          .sort((a, b) => b.sl / (1 + kmBetween(anchor, b)) - a.sl / (1 + kmBetween(anchor, a)));
+        for (const p of near) {
+          if (group.length >= caps[d]) break;
+          take(p);
+          group.push(p);
+        }
+        if (group.length >= caps[d]) break;
+      }
+      if (group.length < Math.min(2, caps[d])) return null;
+      daysPts.push(order(group, d === 0 ? place : anchor));
     }
+    const chosen = daysPts.flat();
     if (daysPts.some((x) => !x.length)) return null;
     const items = [];
     const geo = [];
