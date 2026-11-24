@@ -53,6 +53,7 @@ const TIPS = {
 
 const THEMES = {
   classic: { ja: (c, n) => (n === 2 ? `${c} 1泊2日 名所を一気に` : `${c} ${n - 1}泊${n}日 定番を効率よく`), en: (c, n) => (n === 2 ? `${c} in 2 days: the highlights` : `${c} in ${n} days: the classics, efficiently`), noteJa: '有名な場所を、近い所同士で同じ日にまとめ、移動の無駄が少ない順番に並べました。到着日は午後から、最終日は午前中で終わる時間割です。', noteEn: 'The best-known sights, grouped by area so each day has little back-and-forth. Day one starts in the afternoon and the last day ends by lunchtime.' },
+  packed: { ja: (c, n) => `${c} ${n - 1}泊${n}日 詰め込みで全部回る`, en: (c, n) => `${c} in ${n} days: see it all (packed)`, noteJa: 'いろいろ回りたい人向けに、朝から夜まで予定を詰めた旅程です。近い場所同士をまとめているので、移動は短めです。疲れたら途中の予定を飛ばしても回れる順番にしています。', noteEn: 'For people who want to see as much as possible: busy days from morning to night, grouped by area so the moves stay short. Skip a stop if you need a break.' },
   art: { ja: (c, n) => `${c} 美術館・博物館巡り ${n - 1}泊${n}日`, en: (c, n) => `${c} for art and museum lovers (${n} days)`, noteJa: '美術館・博物館を中心に、近い所を同じ日にまとめた旅程です。大きな館は午前中に入れています。', noteEn: 'Built around museums and galleries, grouped by area. The big ones are placed in the mornings.' },
   history: { ja: (c, n) => `${c} 歴史と建築を巡る ${n - 1}泊${n}日`, en: (c, n) => `${c}: history and architecture in ${n} days`, noteJa: '城・宮殿・教会や寺院など、歴史ある建物を中心に回る旅程です。', noteEn: 'Castles, palaces, churches and temples: a route through the city’s history.' },
   nature: { ja: (c, n) => `${c} 公園と景色でのんびり ${n - 1}泊${n}日`, en: (c, n) => `${c}: parks and views at an easy pace (${n} days)`, noteJa: '公園や景色の良い場所を多めに入れた、詰め込みすぎない旅程です。', noteEn: 'More parks and viewpoints, fewer queues: a relaxed pace.' },
@@ -193,13 +194,17 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
 
   function build(place, theme, days) {
     const car = !!place.region;
-    const perDay = car ? [2, 4, 4, 4, 2] : [3, 5, 5, 5, 2];
+    // 1日の詰め具合：詰め込み（いろいろ回りたい人）／通常。滞在時間もそれに合わせて短く
+    const packed = theme === 'packed';
+    const perDay = car ? [2, 4, 4, 4, 2] : packed ? [4, 9, 9, 9, 3] : [3, 6, 6, 6, 2];
+    const stayK = packed ? 0.55 : 0.8;
     const caps = Array.from({ length: days }, (_, i) => (i === 0 ? perDay[0] : i === days - 1 ? perDay[4] : perDay[1]));
     const N = caps.reduce((a, b) => a + b, 0);
     const all = place.list.filter((p) => kmBetween(p, place) <= place.km);
     const top = all.slice(0, 12).map((p) => p.q);
     const want = {
       classic: ORDER,
+      packed: ORDER,
       art: ['museum'],
       history: ['castle', 'religious', 'ruins', 'monument', 'square'],
       nature: ['park', 'nature', 'zoo', 'tower', 'bridge'],
@@ -211,7 +216,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     const avoid = theme === 'hidden' ? new Set(top) : null;
     // 候補：テーマに合う場所を多めに。足りなければ定番で補う
     let pool = pickPool(all, want, N * 3, avoid, capMul * 2);
-    const core = theme === 'classic' || theme === 'hidden' ? N : Math.ceil(N * 0.6);
+    const core = theme === 'classic' || theme === 'hidden' || theme === 'packed' ? N : Math.ceil(N * 0.6);
     if (pool.length < Math.min(core, N - 2)) return null; // テーマに合う場所が足りない
     if (pool.length < N * 2) pool = pool.concat(pickPool(all.filter((p) => !pool.includes(p)), ORDER, N * 2 - pool.length, avoid, capMul * 2));
     // 日ごとに「その日の中心（有名な場所）」を決め、近い場所だけで1日を組む → 移動の無駄が少ない
@@ -253,7 +258,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
     const legs = {};
     const usedNight = new Set();
     daysPts.forEach((pts, d) => {
-      let t = d === 0 ? (car ? 12 * 60 : 13 * 60 + 30) : 9 * 60 + 30;
+      let t = d === 0 ? (car ? 12 * 60 : 13 * 60) : packed ? 8 * 60 + 30 : 9 * 60;
       let lunch = d === 0;
       pts.forEach((p, i) => {
         if (i > 0) {
@@ -267,14 +272,14 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
           const nm = p.ja || p.en;
           items.push({ type: 'food', title: `昼食（${nm}の近くで）`, en: `Lunch near ${p.en}`, day: d + 1, time: hm(roundQ(Math.max(t, 12 * 60))) });
           geo.push(null);
-          t = roundQ(Math.max(t, 12 * 60)) + 60;
+          t = roundQ(Math.max(t, 12 * 60)) + (packed ? 40 : 60);
           lunch = true;
         }
         const tip = TIPS[p.cat] || TIPS.building;
         const pickTip = tip[hash(p.q)[0] % tip.length];
         items.push({ type: TICKET.includes(p.cat) ? 'ticket' : 'plan', title: p.ja || p.en, en: p.en, day: d + 1, time: hm(roundQ(t)), tip: { ja: pickTip[0], en: pickTip[1] }, q: p.q });
         geo.push({ lat: p.lat, lng: p.lng, wiki: { en: p.enwiki, ja: p.jawiki } });
-        t = roundQ(t) + (STAY[p.cat] || 60);
+        t = roundQ(t) + Math.max(20, Math.round(((STAY[p.cat] || 60) * stayK) / 5) * 5);
       });
       // 夕方以降：夕食と、夜景の名所（ライトアップされた橋や塔など）。最終日は午前で終わるので入れない
       if (d < days - 1 && !car && pts.length) {
@@ -282,7 +287,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
         const night = all
           .filter((x) => ['tower', 'bridge', 'square', 'area'].includes(x.cat) && !chosen.includes(x) && !usedNight.has(x.q) && kmBetween(x, last) < 3)
           .sort((a, b) => kmBetween(a, last) - kmBetween(b, last))[0];
-        const dt = roundQ(Math.max(t + 15, 18 * 60 + 30));
+        const dt = roundQ(Math.max(t + 15, packed ? 18 * 60 : 18 * 60 + 30));
         items.push({ type: 'food', title: `夕食（${night ? night.ja || night.en : last.ja || last.en}の近くで）`, en: `Dinner near ${night ? night.en : last.en}`, day: d + 1, time: hm(dt) });
         geo.push(null);
         if (night) {
@@ -292,7 +297,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
             const mode = km <= 2.5 ? 'foot' : 'transit';
             return { mode, min: Math.max(5, Math.round(mode === 'foot' ? km * 14 : km * 3 + 10)), km: Math.round(km * 10) / 10, rough: true };
           })();
-          items.push({ type: 'plan', title: night.ja || night.en, en: night.en, day: d + 1, time: hm(dt + 90), tip: { ja: '夜はライトアップされた景色がお勧め。帰りの交通手段も確認しておくと安心です。', en: 'Best after dark when it is lit up. Check how you will get back before you go.' }, q: night.q });
+          items.push({ type: 'plan', title: night.ja || night.en, en: night.en, day: d + 1, time: hm(dt + (packed ? 75 : 90)), tip: { ja: '夜はライトアップされた景色がお勧め。帰りの交通手段も確認しておくと安心です。', en: 'Best after dark when it is lit up. Check how you will get back before you go.' }, q: night.q });
           geo.push({ lat: night.lat, lng: night.lng, wiki: { en: night.enwiki, ja: night.jawiki } });
         }
       }
@@ -371,7 +376,7 @@ module.exports = function makeGen({ DATA, readJ, writeJ, onPlan, log = console.l
         place.list = list;
         const variants = place.region
           ? [[place.theme, 3], [place.theme, 4], [place.theme, 5]]
-          : [['classic', 2], ['classic', 3], ['classic', 4], ['classic', 5], ['art', 3], ['history', 3], ['nature', 3], ['hidden', 3], ['art', 2], ['history', 4]];
+          : [['classic', 2], ['classic', 3], ['classic', 4], ['classic', 5], ['art', 3], ['history', 3], ['nature', 3], ['hidden', 3], ['art', 2], ['history', 4], ['packed', 2], ['packed', 3], ['packed', 4]];
         const plans = [];
         for (const [theme, days] of variants) {
           if (theme === 'classic' && days === 3 && hand.has(`${place.slug}-3d`)) continue;

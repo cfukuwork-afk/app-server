@@ -66,7 +66,7 @@ module.exports = function makePublic({ DATA, send, readJson, limited, APP_STORE,
     const adj = second ? (second.d > 0 ? ADJ_HI[second.k] : ADJ_LO[second.k]) : null;
     return ja ? `${adj ? adj[0] : ''}${NOUN[nounK][0]}` : `${adj ? adj[1] + ' ' : ''}${NOUN[nounK][1]}`;
   };
-  const THEME_NAME = { ja: { classic: '定番', art: '美術館', history: '歴史・建築', nature: '自然・公園', hidden: '穴場', castle: '古城ドライブ', scenic: '絶景ドライブ' }, en: { classic: 'Classics', art: 'Art', history: 'History', nature: 'Nature', hidden: 'Hidden gems', castle: 'Castle drives', scenic: 'Scenic drives' } };
+  const THEME_NAME = { ja: { classic: '定番', packed: '詰め込み', art: '美術館', history: '歴史・建築', nature: '自然・公園', hidden: '穴場', castle: '古城ドライブ', scenic: '絶景ドライブ' }, en: { classic: 'Classics', packed: 'Packed', art: 'Art', history: 'History', nature: 'Nature', hidden: 'Hidden gems', castle: 'Castle drives', scenic: 'Scenic drives' } };
 
   /* ---------- 受け取った旅を、公開してよい形にする ---------- */
   const TYPES = ['flight', 'train', 'bus', 'hotel', 'car', 'ticket', 'food', 'plan', 'other'];
