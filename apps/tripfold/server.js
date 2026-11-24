@@ -588,6 +588,7 @@ const server = http.createServer(async (req, res) => {
         if (!q || !raw.toLowerCase().includes(q)) continue;
         let t;
         try { t = JSON.parse(raw); } catch { continue; }
+        t = t.trip || t;
         const live = (x) => x && !x.deleted;
         out.push({ name: t.name, bookings: Object.values(t.bookings || {}).filter(live).map((b) => ({ type: b.type, title: b.title, start: b.start, startTime: b.startTime, end: b.end, endTime: b.endTime, from: b.from, to: b.to })), wishes: Object.values(t.wishes || {}).filter(live).map((w) => w.title || w.name) });
       }
