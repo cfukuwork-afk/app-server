@@ -16,7 +16,7 @@ a{color:inherit}img{max-width:100%;display:block}.wrap{max-width:1080px;margin:0
 .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.btn{display:inline-flex;align-items:center;gap:8px;background:#FF5B3A;color:#fff;text-decoration:none;font-weight:800;padding:13px 20px;border-radius:14px}.btn.w{background:#fff;color:#15171C}.btn.d{background:#15171C}
 .meta{color:#8C9099;font-size:14px}h2{font-size:24px;line-height:1.35;margin:44px 0 14px;letter-spacing:-.01em}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}.tile{display:block;background:#fff;border-radius:20px;overflow:hidden;text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.05);transition:transform .2s}.tile:hover{transform:translateY(-3px)}
-.tile .ph{aspect-ratio:4/3;background:#ddd center/cover no-repeat;position:relative}.tile .ph span{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.92);color:#15171C;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+.tile .tph{aspect-ratio:4/3;background:#ddd center/cover no-repeat;position:relative}.tile .tph span{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.92);color:#15171C;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
 .tile .tx{padding:12px 16px 16px}.tile b{display:block;font-size:17px;line-height:1.4;margin-bottom:4px}
 .card{background:#fff;border-radius:20px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .over{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:-26px;position:relative;z-index:2}.over .card{padding:14px 16px}.over b{display:block;font-size:22px}
@@ -76,5 +76,5 @@ fetch('/v1/pub').then(function(r){return r.json()}).then(function(j){var el=docu
 if(!it.length){el.innerHTML='<div class="card">まだ公開されたしおりはありません。アプリの共有画面から、最初の1件を公開してみませんか。</div>';return}
 function e(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function f(cc){return String.fromCodePoint.apply(null,cc.split('').map(function(c){return 0x1f1a5+c.charCodeAt(0)}))}
-el.innerHTML=it.map(function(s){return '<a class="tile" href="/t/'+s.id+'"><div class="ph" style="background-image:url(\''+e(s.img)+'\')"><span>'+e((s.countries||[]).map(f).join(' '))+' '+s.days+'日間</span></div><div class="tx"><b>'+e((s.emoji?s.emoji+' ':'')+s.name)+'</b><span class="meta">'+e((s.cities||[]).slice(0,4).join(' · '))+'</span></div></a>'}).join('')}).catch(function(){});
+el.innerHTML=it.map(function(s){return '<a class="tile" href="/t/'+s.id+'"><div class="tph" style="background-image:url(\''+e(s.img)+'\')"><span>'+e((s.countries||[]).map(f).join(' '))+' '+s.days+'日間</span></div><div class="tx"><b>'+e((s.emoji?s.emoji+' ':'')+s.name)+'</b><span class="meta">'+e(((s.citiesJa&&s.citiesJa.length)?s.citiesJa:(s.cities||[])).slice(0,4).join(' · '))+'</span></div></a>'}).join('')}).catch(function(){});
 </script></body></html>
