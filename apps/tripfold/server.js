@@ -515,6 +515,7 @@ async function webDel(req, res, code, url) {
 const wbb = require('./wbb')({ DATA, send, readBody, limited });
 const stats = require('./stats')({ DATA });
 const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE, PORT });
+const mail = require('./mail')({ DATA, send, readJson, limited });
 
 const server = http.createServer(async (req, res) => {
   // このサーバー自身からの呼び出し（公開しおりの写真・道のりを調べるとき）は、回数制限の対象にしない
@@ -533,6 +534,7 @@ const server = http.createServer(async (req, res) => {
     if (limited(ip, 'all', 300, 60 * 1000)) return send(res, 429, { error: 'too many requests' });
 
     stats.hit(req, p, ip);
+    if (await mail.route(req, res, p, ip)) return;
     if (await stats.route(req, res, p, ip, limited)) return;
     // 検索エンジン向け（Search Console の所有確認・robots.txt）
     if (req.method === 'GET' && p === '/google0c47f106904d3106.html') {
@@ -819,5 +821,9 @@ ${webForm(t, w, code, base, req)}
   }
 });
 
-if (require.main === module) server.listen(PORT, '127.0.0.1', () => console.log(`tripfold listening on ${PORT}`));
+if (require.main === module) {
+  server.listen(PORT, '127.0.0.1', () => console.log(`tripfold listening on ${PORT}`));
+  // メールの受け取り（app.conf の MAIL_PORT。25番を使うので deploy.sh が権限とファイアウォールを用意する）
+  if (process.env.MAIL_PORT) mail.startSmtp(Number(process.env.MAIL_PORT));
+}
 module.exports = { mergeTrip, settleTrip };

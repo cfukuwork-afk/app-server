@@ -10,7 +10,7 @@ echo "# このファイルは deploy.sh が自動で作ります。直接は編�
 for conf in "$ROOT"/apps/*/app.conf; do
   [ -f "$conf" ] || continue
   dir=$(dirname "$conf")
-  NAME=""; PORT=""; HOSTS=""
+  NAME=""; PORT=""; HOSTS=""; MAIL_PORT=""
   # shellcheck disable=SC1090
   source "$conf"
   [ -n "$NAME" ] && [ -n "$PORT" ] || continue
@@ -29,6 +29,9 @@ WorkingDirectory=$dir
 Environment=PORT=$PORT
 Environment=DATA_DIR=/srv/data/$NAME
 Environment=NODE_ENV=production
+${MAIL_PORT:+Environment=MAIL_PORT=$MAIL_PORT
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE}
 ExecStart=/usr/bin/node $dir/server.js
 Restart=always
 RestartSec=3
@@ -40,6 +43,8 @@ ReadWritePaths=/srv/data/$NAME
 [Install]
 WantedBy=multi-user.target
 UNIT
+  # メールを受け取るアプリは、そのポートをファイアウォールで開ける
+  if [ -n "$MAIL_PORT" ]; then ufw allow "$MAIL_PORT/tcp" >/dev/null 2>&1 || true; fi
   echo "$HOSTS {
 	encode gzip
 	request_body {
