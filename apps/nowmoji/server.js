@@ -514,7 +514,14 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if (p.startsWith('/v1/')) return await api(req, res, p, ip);
+    if (p.startsWith('/v1/')) {
+      // Web版の確認用（認証はヘッダーなので、どこからでも読めて問題ない）
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+      if (req.method === 'OPTIONS') return res.writeHead(204).end();
+      return await api(req, res, p, ip);
+    }
     if (p === '/health') return json(res, 200, { ok: true });
     if (p === '/icon.png' && ICON) {
       res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' });
