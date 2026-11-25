@@ -1,6 +1,6 @@
 // Nowmoji（親しい人のロック画面に、いまの気分を顔文字で置いておく）— 外部ライブラリなし・Node.js 22
 //  - 匿名アカウント（端末ごと）。名前だけ決めて使う
-//  - グループ（自分＋5人まで）・招待コード・名前の変更・退出
+//  - グループ（自分を入れて5人まで）・招待コード・名前の変更・退出
 //  - 投稿（顔文字・キャラの絵・落書き・画像スタンプ＋ひとこと）。ウィジェットは各人の最新だけ、履歴はカレンダーで
 //  - ブロック・通報・データ削除、届いたら通知（Expo のプッシュ）
 //  - 招待ページ /j/<code>、利用規約 /terms、プライバシー /privacy、管理画面 /admin（最初に開いた人がパスワードを決める）
@@ -22,7 +22,7 @@ const SECRET = fs.readFileSync(SECRET_FILE, 'utf8').trim();
 const ADMIN_FILE = path.join(DATA, 'admin.json');
 const CONF_FILE = path.join(__dirname, 'store.json'); // App Store の住所など（公開してよい値だけ）
 
-const MAX_MEMBERS = 6; // 自分＋5人
+const MAX_MEMBERS = 5; // 自分を入れて5人
 const FREE_GROUPS = 2;
 const MOODS = {
   sleepy: { ja: 'ねむい', en: 'Sleepy', kao: '(´-ω-`)zz' },
@@ -435,7 +435,7 @@ function invitePage(req, q, code) {
   const store = conf.appStoreUrl || 'https://apps.apple.com/search?term=Nowmoji';
   const ja = lang === 'ja';
   if (!g) return shell(lang, 'Nowmoji', `<div class="card"><h1>${ja ? 'この招待は使えません' : 'This invite is no longer valid'}</h1><p>${ja ? 'グループが無くなったか、招待コードが変わりました。招待した人にもう一度送ってもらってください。' : 'The group was removed or the code changed. Ask your friend to send a new invite.'}</p></div>`);
-  return shell(lang, 'Nowmoji', `<div class="card"><p>${ja ? 'Nowmoji で' : 'You’re invited to'}</p><h1>「${esc(g.name)}」${ja ? 'に招待されています' : ''}</h1><p class="small">${ja ? `いま ${g.members.length}人（最大6人）` : `${g.members.length} of 6 people`}</p>
+  return shell(lang, 'Nowmoji', `<div class="card"><p>${ja ? 'Nowmoji で' : 'You’re invited to'}</p><h1>「${esc(g.name)}」${ja ? 'に招待されています' : ''}</h1><p class="small">${ja ? `いま ${g.members.length}人（最大5人）` : `${g.members.length} of 5 people`}</p>
 <a class="btn" href="nowmoji://join/${esc(code)}">${ja ? 'アプリで参加する' : 'Join in the app'}</a><a class="btn sub" href="${esc(store)}">${ja ? 'アプリを入手する' : 'Get the app'}</a>
 <p class="small" style="margin-top:22px">${ja ? 'アプリを入れたあと、この画面に戻って「アプリで参加する」を押すか、アプリで下のコードを入力してください。' : 'After installing, come back and tap “Join in the app”, or enter this code in the app.'}</p><div class="code">${esc(code)}</div></div>`);
 }
