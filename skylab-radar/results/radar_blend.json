@@ -1,0 +1,47 @@
+{
+ "cases": 5,
+ "by_lead": {
+  "60": {
+   "n_test": 57,
+   "w_ext": 1.0,
+   "mae": {
+    "extrapolation": 0.1648,
+    "nwp": 0.1562,
+    "blend": 0.1648
+   },
+   "accuracy_0.5mm": {
+    "extrapolation": 0.8772,
+    "nwp": 0.9298,
+    "blend": 0.8772
+   }
+  },
+  "120": {
+   "n_test": 57,
+   "w_ext": 0.0,
+   "mae": {
+    "extrapolation": 0.2738,
+    "nwp": 0.1278,
+    "blend": 0.1278
+   },
+   "accuracy_0.5mm": {
+    "extrapolation": 0.807,
+    "nwp": 0.8947,
+    "blend": 0.8947
+   }
+  },
+  "180": {
+   "n_test": 57,
+   "w_ext": 0.0,
+   "mae": {
+    "extrapolation": 0.3031,
+    "nwp": 0.1137,
+    "blend": 0.1137
+   },
+   "accuracy_0.5mm": {
+    "extrapolation": 0.7895,
+    "nwp": 0.9123,
+    "blend": 0.9123
+   }
+  }
+ }
+}
