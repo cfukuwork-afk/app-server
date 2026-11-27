@@ -181,7 +181,7 @@ http
       try { if ((await api.handle(req, res, u)) !== false) return; } catch (e) { console.error(e); return res.writeHead(500).end(); }
       return res.writeHead(404).end();
     }
-    if (PAGES[p]) return res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(PAGES[p]);
+    if (PAGES[p] && req.method !== 'POST') return res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(PAGES[p]);
     if (p === '/support' && req.method === 'POST') {
       let b = ''; req.on('data', (d) => { b += d; if (b.length > 10000) req.destroy(); });
       return req.on('end', () => { fs.appendFile(path.join(DATA, 'support.jsonl'), JSON.stringify({ at: new Date().toISOString(), body: b.slice(0, 5000) }) + '\n', () => {}); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(page('SkyLab', '<p>送信しました。ありがとうございます。<br>Thank you, your message was sent.</p>')); });
