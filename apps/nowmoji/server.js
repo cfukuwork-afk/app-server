@@ -196,7 +196,9 @@ async function notify(p, g, from) {
     const u = db.users[id];
     if (!u || !u.pushToken || (u.blocked || []).includes(from.id) || (u.muted || []).includes(g.id)) continue;
     const body = [moodText(p, u.lang), p.word].filter(Boolean).join('  ');
-    msgs.push({ to: u.pushToken, title: from.name, subtitle: g.members.length > 2 ? g.name : undefined, body, sound: 'default', _contentAvailable: true, priority: 'high', data: { t: 'post', g: g.id, from: from.id } });
+    // w：ウィジェット書き換え用（端末の通知拡張が、アプリを起動せずにロック画面のウィジェットを更新する）
+    const w = { g: g.id, u: from.id, k: p.kind === 'kao' ? p.kao || (p.mood && MOODS[p.mood]?.kao) || '' : p.kind === 'art' ? MOODS[p.mood]?.kao || '' : '', w: p.word || '', at: p.at, m: p.kind === 'art' ? p.mood : undefined, img: (p.kind === 'doodle' || p.kind === 'stamp') && p.img ? '/img/' + p.img : undefined };
+    msgs.push({ to: u.pushToken, title: from.name, subtitle: g.members.length > 2 ? g.name : undefined, body, sound: 'default', mutableContent: true, _contentAvailable: true, priority: 'high', data: { t: 'post', g: g.id, from: from.id, w } });
   }
   for (let i = 0; i < msgs.length; i += 90) {
     try {
