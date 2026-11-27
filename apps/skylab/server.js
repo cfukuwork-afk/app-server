@@ -22,6 +22,12 @@ const POINTS = [
   { id: 'edinburgh', lat: 55.9533, lon: -3.1883 },
   { id: 'lerwick', lat: 60.1546, lon: -1.1450 }, // シェトランド（オーロラ）
   { id: 'snowdon', lat: 53.0685, lon: -4.0763 }, // 山岳（雲海）
+  // フィンランド・ラップランド（オーロラ。2027年1月の現地検証）
+  { id: 'rovaniemi', lat: 66.5039, lon: 25.7294, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
+  { id: 'saariselka', lat: 68.4183, lon: 27.4136, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
+  { id: 'kittila', lat: 67.6600, lon: 24.9100, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
+  { id: 'kilpisjarvi', lat: 69.0450, lon: 20.7950, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
+  { id: 'helsinki', lat: 60.1699, lon: 24.9384, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
 ];
 const HOURLY = ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'precipitation', 'rain', 'showers', 'direct_radiation', 'diffuse_radiation', 'cloud_cover', 'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high', 'visibility', 'wind_speed_10m', 'wind_direction_10m', 'surface_pressure', 'cape', 'temperature_850hPa', 'relative_humidity_850hPa', 'temperature_925hPa', 'relative_humidity_925hPa'];
 
@@ -30,7 +36,7 @@ const JOBS = [
     id: 'om_' + p.id,
     every: 60, // 分
     // 複数モデルを並べて保存（あとで地域・季節・リードタイム別の重み付けを学習するため）
-    url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: p.lat, longitude: p.lon, hourly: HOURLY.join(','), models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,ukmo_seamless', timezone: 'GMT', forecast_days: 3 }).toString(),
+    url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: p.lat, longitude: p.lon, hourly: HOURLY.join(','), models: p.models || 'ecmwf_ifs025,gfs_seamless,icon_seamless,ukmo_seamless', timezone: 'GMT', forecast_days: 3 }).toString(),
   })),
   // モデルの最新実行の初期時刻（予報の発行時刻を記録するため）
   { id: 'om_meta_ecmwf', every: 60, url: () => 'https://api.open-meteo.com/data/ecmwf_ifs025/static/meta.json' },
