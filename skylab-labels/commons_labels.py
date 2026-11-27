@@ -66,7 +66,9 @@ def details(titles):
         yield dict(file=p['title'], taken_raw=g('DateTimeOriginal'), lat=lat, lon=lon, gps_source=src if lat else '',
                    license=g('LicenseShortName'), artist_present=bool(g('Artist')))
 
-ROOTS = {ph: find_roots(ws) for ph, ws in KEYWORDS.items()}
+ONLY = os.environ.get('ONLY', 'sunset,sunrise,aurora,halo,noctilucent,fogbow').split(',')  # 虹は収集済み
+MAXFILES = int(os.environ.get('MAXFILES', '4000'))
+ROOTS = {ph: find_roots(ws) for ph, ws in KEYWORDS.items() if ph in ONLY}
 say('roots', json.dumps(ROOTS, ensure_ascii=False))
 seen_files, rows = set(), []
 for ph, roots in ROOTS.items():
@@ -80,6 +82,8 @@ for ph, roots in ROOTS.items():
         if d == 0 and not fs and not list(members(cat, 'subcat')):
             say('empty or missing root', cat)
         files += [(f, cat) for f in fs if f not in seen_files]
+        if len(files) >= MAXFILES:
+            break
         seen_files.update(fs)
         if d < MAXDEPTH:
             queue += [(c, d + 1) for c in members(cat, 'subcat')]
@@ -90,6 +94,9 @@ for ph, roots in ROOTS.items():
         for r in details(names[i:i + 50]):
             r.update(phenomenon=ph, category=catof.get(r['file'], ''))
             rows.append(r)
+        if i % 1000 == 0:  # 途中経過を残す（時間切れでも結果が残るように）
+            with open('out/labels_partial.csv', 'w', newline='', encoding='utf-8') as f:
+                w = csv.DictWriter(f, ['phenomenon', 'file', 'taken_raw', 'lat', 'lon', 'gps_source', 'license', 'artist_present', 'category']); w.writeheader(); w.writerows(rows)
         time.sleep(0.3)
 cols = ['phenomenon', 'file', 'taken_raw', 'lat', 'lon', 'gps_source', 'license', 'artist_present', 'category']
 with open('out/labels_commons.csv', 'w', newline='', encoding='utf-8') as f:

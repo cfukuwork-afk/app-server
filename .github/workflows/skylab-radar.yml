@@ -14,9 +14,11 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install boto3 h5py pysteps opencv-python-headless pyproj
-      - run: cd skylab-radar && python ${{ vars.RADAR_SCRIPT || 'radar_blend.py' }}
+      - run: mkdir -p skylab-radar/out && cd skylab-radar && (python ${{ vars.RADAR_SCRIPT || 'radar_blend.py' }} 2>&1 | tail -200 > out/stderr_tail.txt; exit ${PIPESTATUS[0]})
+        shell: bash
       - name: save
+        if: always()
         run: |
-          mkdir -p skylab-radar/results && cp skylab-radar/out/*.txt skylab-radar/out/*.json skylab-radar/results/ 2>/dev/null || true
+          mkdir -p skylab-radar/out skylab-radar/results && cp skylab-radar/out/*.txt skylab-radar/out/*.json skylab-radar/results/ 2>/dev/null || true
           git config user.name skylab-bot && git config user.email skylab-bot@users.noreply.github.com
           git add skylab-radar/results && git commit -m "SkyLab radar job results" && git pull --rebase && git push

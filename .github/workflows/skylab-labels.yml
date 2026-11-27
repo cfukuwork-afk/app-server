@@ -8,14 +8,15 @@ permissions:
 jobs:
   labels:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: cd skylab-labels && python commons_labels.py
       - name: save
+        if: always()
         run: |
-          mkdir -p skylab-labels/results && cp skylab-labels/out/labels_commons.csv skylab-labels/out/log.txt skylab-labels/results/
+          mkdir -p skylab-labels/results && cp skylab-labels/out/labels_commons.csv skylab-labels/out/log.txt skylab-labels/results/ 2>/dev/null || true; cp skylab-labels/out/labels_partial.csv skylab-labels/results/ 2>/dev/null || true
           git config user.name skylab-bot && git config user.email skylab-bot@users.noreply.github.com
           git add skylab-labels/results && git commit -m "SkyLab labels from Wikimedia Commons" && git pull --rebase && git push
