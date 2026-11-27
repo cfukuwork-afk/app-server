@@ -30,10 +30,12 @@ __export(sky_exports, {
   meteorShowers: () => meteorShowers,
   moonInfo: () => moonInfo,
   moonPos: () => moonPos,
+  pClear: () => pClear,
   rainbow: () => rainbow,
   stars: () => stars,
   sunPos: () => sunPos,
-  today: () => today
+  today: () => today,
+  withProb: () => withProb
 });
 module.exports = __toCommonJS(sky_exports);
 
@@ -3031,7 +3033,19 @@ var NodeEventKind;
 })(NodeEventKind || (NodeEventKind = {}));
 
 // src/sky.ts
-var ENGINE_VERSION = "sky-1.0.0";
+var ENGINE_VERSION = "sky-1.1.0";
+function pClear(cloud, leadH, cal) {
+  if (cloud == null) return { p: null, calibrated: false };
+  const leads = cal ? Object.keys(cal.by_lead).map(Number).sort((a, b) => a - b) : [];
+  if (leads.length) {
+    const day = Math.max(1, Math.round(leadH / 24));
+    const L = leads.reduce((a, b) => Math.abs(b - day) < Math.abs(a - day) ? b : a);
+    const tab = cal.by_lead[String(L)].table;
+    const row = tab[Math.min(tab.length - 1, Math.floor(cloud / 10))];
+    return { p: row.p, calibrated: true };
+  }
+  return { p: Math.max(0, Math.min(1, 1 - cloud / 100)), calibrated: false };
+}
 var obsOf = (lat, lon) => new Observer(lat, lon, 0);
 function sunPos(lat, lon, d) {
   const o = obsOf(lat, lon);
@@ -3273,6 +3287,93 @@ function compass(deg, ja) {
   const J = ["\u5317", "\u5317\u6771", "\u6771", "\u5357\u6771", "\u5357", "\u5357\u897F", "\u897F", "\u5317\u897F"], E = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   return (ja ? J : E)[Math.round(deg / 45) % 8];
 }
+var clamp01 = (x) => Math.max(0, Math.min(1, x));
+function withProb(items, lat, lon, d, now = /* @__PURE__ */ new Date()) {
+  const cal = d.calibration ?? null;
+  for (const it of items) {
+    const at = it.peak || it.start;
+    if (!at) {
+      it.p = it.level === 0 ? 0 : null;
+      it.conf = "low";
+      it.factors = [];
+      continue;
+    }
+    const h = hourAt(d.weather, at);
+    const leadH = Math.max(0, (at.getTime() - now.getTime()) / 36e5);
+    const cloud = h ? m(h.cloud_cover) : null;
+    const pc = pClear(cloud, leadH, cal);
+    const confOf = (base) => pc.calibrated ? base : "low";
+    const F = [];
+    if (pc.p != null) F.push({ key: "clear", v: pc.p });
+    switch (it.key) {
+      case "stars":
+        it.p = pc.p;
+        it.conf = confOf("mid");
+        F.push({ key: "dark", v: 1 });
+        break;
+      case "milkyway": {
+        if (it.level === 0) {
+          it.p = 0;
+          it.conf = "mid";
+          break;
+        }
+        const mp = moonPos(lat, lon, at);
+        const moonDark = mp.alt <= 0 ? 1 : 1 - mp.frac;
+        F.push({ key: "dark", v: 1 }, { key: "moon", v: moonDark });
+        it.p = pc.p;
+        it.conf = confOf("mid");
+        break;
+      }
+      case "goldenhour":
+      case "bluehour":
+        it.p = pc.p;
+        it.conf = confOf("mid");
+        break;
+      case "aurora": {
+        const a = d.aurora;
+        const ov = a ? a.visible_max / 100 : 0;
+        const dark = it.extra?.darkNow ? 1 : 0;
+        F.push({ key: "aurora", v: ov }, { key: "dark", v: dark });
+        it.p = pc.p == null ? null : ov * pc.p * (dark || 1);
+        it.conf = pc.calibrated ? "mid" : "low";
+        break;
+      }
+      case "sunset":
+      case "sunrise": {
+        const x = it.extra || {};
+        if (x.low == null) {
+          it.p = null;
+          it.conf = "low";
+          break;
+        }
+        const lowOK = 1 - x.low / 100, upper = Math.max(x.mid, x.high) / 100, dry = 1 - clamp01(x.pr);
+        const canvas = 1 - Math.abs(upper - 0.5) / 0.5;
+        F.push({ key: "lowcloud", v: lowOK }, { key: "canvas", v: canvas });
+        it.p = clamp01(lowOK * (0.25 + 0.75 * canvas) * dry);
+        it.conf = "low";
+        break;
+      }
+      case "rainbow": {
+        if (it.level === 0 || !h) {
+          it.p = it.level === 0 ? 0.02 : null;
+          it.conf = "low";
+          break;
+        }
+        const sh = Math.max(m(h.showers) ?? 0, m(h.precipitation) ?? 0), low = m(h.cloud_cover_low) ?? 100;
+        const pShower = clamp01(sh / 0.5), pSun = 1 - low / 100;
+        F.push({ key: "shower", v: pShower }, { key: "sun", v: pSun });
+        it.p = clamp01(pShower * pSun);
+        it.conf = "low";
+        break;
+      }
+      default:
+        it.p = pc.p;
+        it.conf = confOf("mid");
+    }
+    it.factors = F;
+  }
+  return items;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   ENGINE_VERSION,
@@ -3284,10 +3385,12 @@ function compass(deg, ja) {
   meteorShowers,
   moonInfo,
   moonPos,
+  pClear,
   rainbow,
   stars,
   sunPos,
-  today
+  today,
+  withProb
 });
 /*! Bundled license information:
 

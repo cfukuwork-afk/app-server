@@ -11,6 +11,16 @@ const S = require('./engine.js'); // tabi-shiori/skylab/src/sky.ts を esbuild �
 
 module.exports = function makeApi(DATA, POINTS = []) {
   const PRED = path.join(DATA, 'predictions');
+  // 晴れ間の確率の較正表（GitHub Actions の学習結果を、検証の数字を確かめてから calibration.json として置く）
+  let calib = null, calibAt = 0;
+  function calibration() {
+    try {
+      const f = path.join(__dirname, 'calibration.json');
+      const st = fs.statSync(f);
+      if (st.mtimeMs !== calibAt) { calib = JSON.parse(fs.readFileSync(f, 'utf8')); calibAt = st.mtimeMs; }
+    } catch { calib = null; }
+    return calib;
+  }
   fs.mkdirSync(PRED, { recursive: true });
   const REPORTS = path.join(DATA, 'reports.jsonl');
   const USERS = path.join(DATA, 'users.json');
@@ -163,8 +173,8 @@ module.exports = function makeApi(DATA, POINTS = []) {
     for (const pt of POINTS) {
       try {
         const w = await weather(pt.lat, pt.lon);
-        const d = { weather: w, aurora: auroraAt(pt.lat, pt.lon), kp_forecast: kpf };
-        const items = S.today(pt.lat, pt.lon, d, issued).concat(S.goldenBlue(pt.lat, pt.lon, w, issued));
+        const d = { weather: w, aurora: auroraAt(pt.lat, pt.lon), kp_forecast: kpf, calibration: calibration() };
+        const items = S.withProb(S.today(pt.lat, pt.lon, d, issued).concat(S.goldenBlue(pt.lat, pt.lon, w, issued)), pt.lat, pt.lon, d, issued);
         const rec = { issued_at: issued.toISOString(), engine: S.ENGINE_VERSION, point: pt.id, lat: pt.lat, lon: pt.lon,
           inputs: { weather_retrieved_at: w.retrieved_at, models: w.models, hours: w.hours.filter((h) => Date.parse(h.t) <= issued.getTime() + 36 * 3600e3), aurora: d.aurora, kp: kpf },
           outputs: items };
@@ -190,7 +200,7 @@ module.exports = function makeApi(DATA, POINTS = []) {
       if (lat == null || lon == null) return send(res, 400, { error: 'lat/lon' });
       let w = null, err = null;
       try { w = await weather(lat, lon); } catch (e) { err = String(e.message); }
-      return send(res, 200, { lat, lon, issued_at: new Date().toISOString(), engine: S.ENGINE_VERSION, weather: w, weather_error: err, aurora: auroraAt(lat, lon), kp_forecast: kpf, note: 'blend=simple mean (not yet validated)' });
+      return send(res, 200, { lat, lon, issued_at: new Date().toISOString(), engine: S.ENGINE_VERSION, weather: w, weather_error: err, aurora: auroraAt(lat, lon), kp_forecast: kpf, calibration: calibration(), note: 'blend=simple mean (not yet validated)' });
     }
     if (p === '/api/report' && req.method === 'POST') {
       const b = await body(req);
