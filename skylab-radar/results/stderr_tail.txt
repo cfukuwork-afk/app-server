@@ -1,0 +1,13 @@
+/home/runner/work/app-server/app-server/skylab-radar/radar_blend.py:61: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  today = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+Pysteps configuration file found at: /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pysteps/pystepsrc
+
+skip 2026-11-04 09:00:00 'UL_x'
+Traceback (most recent call last):
+  File "/home/runner/work/app-server/app-server/skylab-radar/radar_blend.py", line 83, in <module>
+    o = np.nanmean([at(obs[k], c) for k in ks]); e = np.nanmean([at(np.nan_to_num(ext[k - 1]), c) for k in ks]); n = N[c].get(hr)
+                    ^^^^^^^^^^^^^
+  File "/home/runner/work/app-server/app-server/skylab-radar/radar_blend.py", line 46, in at
+    r, k = GEO[c]
+           ~~~^^^
+KeyError: 'London'
