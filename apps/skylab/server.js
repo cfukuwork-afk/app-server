@@ -35,8 +35,9 @@ const JOBS = [
   { id: 'om_meta_ecmwf', every: 60, url: () => 'https://api.open-meteo.com/data/ecmwf_ifs025/static/meta.json' },
   { id: 'om_meta_ukmo', every: 60, url: () => 'https://api.open-meteo.com/data/ukmo_global_deterministic_10km/static/meta.json' },
   // 宇宙天気（NOAA SWPC）
-  { id: 'swpc_mag_1d', every: 60, url: () => 'https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json' },
-  { id: 'swpc_plasma_1d', every: 60, url: () => 'https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json' },
+  // 太陽風（DSCOVR 等、1分値）。旧 /products/solar-wind/ は廃止（404）。ファイルは重なりを持たせて3時間ごとに保存
+  { id: 'swpc_rtsw_mag', every: 180, url: () => 'https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json' },
+  { id: 'swpc_rtsw_wind', every: 180, url: () => 'https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json' },
   { id: 'swpc_kp', every: 180, url: () => 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json' },
   { id: 'swpc_kp_forecast', every: 180, url: () => 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json' },
   { id: 'swpc_ovation', every: 60, url: () => 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json' },
