@@ -50,7 +50,7 @@ def obs(st):
     q = urllib.parse.urlencode([('station', st), ('data', 'tmpf'), ('data', 'sknt'), ('tz', 'Etc/UTC'), ('format', 'onlycomma'),
         ('latlon', 'no'), ('missing', 'empty'), ('trace', 'empty'), ('report_type', '3'), ('report_type', '4'),
         ('year1', d0.year), ('month1', d0.month), ('day1', d0.day), ('year2', d1.year), ('month2', d1.month), ('day2', d1.day)])
-    txt = cached(f'obs_{st}.csv', 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?' + q).decode()
+    txt = cached(f'obs_{st}_{END}.csv', 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?' + q).decode()
     best = {}  # 正時 → (時刻差分, 値)  正時の ±15 分以内で最も近い報告
     for r in csv.DictReader(io.StringIO(txt)):
         try:
@@ -79,7 +79,7 @@ def fcst(st):
         e = min(d + timedelta(days=89), datetime.fromisoformat(END))
         q = urllib.parse.urlencode({'latitude': lat, 'longitude': lon, 'hourly': ','.join(hourly), 'models': ','.join(MODELS),
             'start_date': d.date().isoformat(), 'end_date': e.date().isoformat(), 'wind_speed_unit': 'ms', 'timezone': 'GMT'})
-        j = json.loads(cached(f'f_{st}_{d.date()}.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
+        j = json.loads(cached(f'f_{st}_{d.date()}_{e.date()}.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
         if 'hourly' not in j:
             say('no hourly', st, d.date(), str(j)[:200])
         else:
