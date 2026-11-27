@@ -12,6 +12,21 @@ const zlib = require('zlib');
 const PORT = Number(process.env.PORT || 3106);
 const DATA = process.env.DATA_DIR || path.join(__dirname, 'data');
 const RAW = path.join(DATA, 'raw');
+const api = require('./api')(DATA);
+const page = (t, b) => `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${t}</title><style>body{font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}h1{font-size:22px}h2{font-size:17px;margin-top:28px}textarea,input{width:100%;font-size:16px;padding:8px;box-sizing:border-box}button{font-size:16px;padding:10px 20px;margin-top:10px}</style><h1>${t}</h1>${b}`;
+const PAGES = {
+  '/': page('SkyLab', '<p>空の現象（オーロラ・星空・夕焼け・虹など）が、いつ・どこで・どの方向に見えるかを予測するアプリです。<br>SkyLab forecasts when and where you can see sky phenomena.</p><p><a href="/privacy">プライバシーポリシー / Privacy</a> ・ <a href="/terms">利用規約 / Terms</a> ・ <a href="/support">サポート / Support</a></p>'),
+  '/privacy': page('SkyLab プライバシーポリシー / Privacy Policy', `<p>最終更新：2026年11月27日</p>
+<h2>集める情報</h2><p>予報を出すために、端末の位置（緯度・経度）を送ります。サーバーでは予報の計算に使い、通知を登録した場合は0.1度（約10km）に丸めた位置だけを保存します。<br>「見えた／見えなかった」報告では、現象の種類、時刻、0.01度（約1km）に丸めた位置、アプリが表示していた予報を保存し、予報の精度の検証と改善に使います。<br>通知のための端末トークンと、端末内で作るランダムなIDを保存します。氏名・メールアドレス・広告IDは集めません。</p>
+<h2>第三者への提供</h2><p>個人を特定できる形で第三者に提供・販売しません。通知の配信には Expo（米国）のサービスを使います。予報の元データとして、位置（丸めたもの）を気象データの提供元（Open-Meteo）に送ります。</p>
+<h2>削除</h2><p>アプリの設定から「データを削除」で、サーバー上の登録情報を削除できます。報告は個人と結びつかない形で研究に使い続けることがあります。</p>
+<h2>English</h2><p>We send your device location to compute forecasts. If you enable alerts we store your location rounded to 0.1°. Sighting reports store the phenomenon, time, location rounded to 0.01° and the forecast shown, used to verify and improve accuracy. We store a push token and a random in-app ID. We do not collect names, emails or advertising IDs, and we do not sell data. Push delivery uses Expo; forecast data comes from Open-Meteo, NOAA SWPC. You can delete your registration in Settings.</p>
+<p>お問い合わせ / Contact: <a href="/support">サポート</a></p>`),
+  '/terms': page('SkyLab 利用規約 / Terms', `<p>SkyLab の予報は、気象・宇宙天気のデータと計算による目安です。現象が必ず見えることを保証しません。「実験中」と表示した項目は、精度を検証している途中の機能です。観測の際は、天候・交通・寒さなど安全に十分注意してください。予報に基づく判断による損害について、開発者は責任を負いません。</p>
+<p>SkyLab forecasts are estimates based on weather and space-weather data and are not guaranteed. Items marked "Experimental" are still being validated. Stay safe when observing. The developer is not liable for decisions made based on the forecasts.</p>
+<p>Apple の標準利用規約（EULA）も適用されます / Apple's standard EULA applies: <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</a></p>`),
+  '/support': page('SkyLab サポート / Support', '<p>ご質問・不具合・ご要望はこちらからお送りください。返信が必要な場合は連絡先も書いてください。<br>Questions, bugs, or ideas — send them here. Include contact details if you want a reply.</p><form method="post"><textarea name="m" rows="8" required></textarea><button>送信 / Send</button></form>'),
+};
 fs.mkdirSync(RAW, { recursive: true });
 
 // 初期の検証地点（英国）。追加するときは名前を変えない（ファイル名に使う）
@@ -52,8 +67,8 @@ const JOBS = [
   { id: 'swpc_rtsw_mag', every: 180, url: () => 'https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json' },
   { id: 'swpc_rtsw_wind', every: 180, url: () => 'https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json' },
   { id: 'swpc_kp', every: 180, url: () => 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json' },
-  { id: 'swpc_kp_forecast', every: 180, url: () => 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json' },
-  { id: 'swpc_ovation', every: 60, url: () => 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json' },
+  { id: 'swpc_kp_forecast', every: 180, url: () => 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json', after: (b) => api.setKpForecast(b) },
+  { id: 'swpc_ovation', every: 15, url: () => 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json', after: (b) => api.setOvation(b) },
 ];
 
 // 世界の検証地点：METAR のある空港から、緯度経度 6°のマスごとに1か所を選ぶ（陸と島をまんべんなく）。1日1回選び直す
@@ -159,8 +174,18 @@ function usage() {
 }
 
 http
-  .createServer((req, res) => {
-    const p = new URL(req.url, 'http://x').pathname;
+  .createServer(async (req, res) => {
+    const u = new URL(req.url, 'http://x');
+    const p = u.pathname;
+    if (p.startsWith('/api/')) {
+      try { if ((await api.handle(req, res, u)) !== false) return; } catch (e) { console.error(e); return res.writeHead(500).end(); }
+      return res.writeHead(404).end();
+    }
+    if (PAGES[p]) return res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(PAGES[p]);
+    if (p === '/support' && req.method === 'POST') {
+      let b = ''; req.on('data', (d) => { b += d; if (b.length > 10000) req.destroy(); });
+      return req.on('end', () => { fs.appendFile(path.join(DATA, 'support.jsonl'), JSON.stringify({ at: new Date().toISOString(), body: b.slice(0, 5000) }) + '\n', () => {}); res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(page('SkyLab', '<p>送信しました。ありがとうございます。<br>Thank you, your message was sent.</p>')); });
+    }
     if (p === '/health') return res.writeHead(200, { 'Content-Type': 'application/json' }).end('{"ok":true}');
     if (p === '/status') {
       // 公開してよいのは収集の状態だけ（データそのものは出さない）
