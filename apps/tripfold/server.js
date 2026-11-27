@@ -518,6 +518,17 @@ const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE
 const mail = require('./mail')({ DATA, send, readJson, limited });
 
 const server = http.createServer(async (req, res) => {
+  // SkyLab アプリの API を tripfold.net 経由でも届くようにする（sslip.io が引けない携帯回線への対策）。中身は 3106 番へそのまま渡す
+  if (req.url.startsWith('/skylab/')) {
+    const up = http.request({ host: '127.0.0.1', port: 3106, path: req.url.slice('/skylab'.length), method: req.method, headers: { 'content-type': req.headers['content-type'] || '', 'x-forwarded-for': String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '') } }, (r) => {
+      res.writeHead(r.statusCode || 502, { 'content-type': r.headers['content-type'] || 'application/json', 'cache-control': 'no-store' });
+      r.pipe(res);
+    });
+    up.on('error', () => { if (!res.headersSent) res.writeHead(502); res.end(); });
+    up.setTimeout(30000, () => up.destroy());
+    req.pipe(up);
+    return;
+  }
   // このサーバー自身からの呼び出し（公開しおりの写真・道のりを調べるとき）は、回数制限の対象にしない
   const self = !req.headers['x-forwarded-for'] && /^(::ffff:)?127\.0\.0\.1$|^::1$/.test(String(req.socket.remoteAddress || ''));
   const ip = self ? 'self' : String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
