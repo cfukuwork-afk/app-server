@@ -11,7 +11,9 @@ ROOTS = {
   'aurora': ['Category:Aurora borealis in the United Kingdom', 'Category:Aurorae in the United Kingdom', 'Category:Aurora borealis in Scotland', 'Category:Aurora borealis in England'],
   'halo': ['Category:22° halos', 'Category:Sun dogs', 'Category:Halos (optical phenomenon)'],
 }
-MAXDEPTH = int(os.environ.get('DEPTH', '4'))
+MAXDEPTH = int(os.environ.get('DEPTH', '2'))
+MAXCATS = int(os.environ.get('MAXCATS', '400'))  # 1現象あたりのカテゴリ数の上限（前回は全部たどって時間切れ）
+T0 = time.time()
 os.makedirs('out', exist_ok=True)
 log = open('out/log.txt', 'a')
 def say(*a):
@@ -56,8 +58,8 @@ def details(titles):
 seen_files, rows = set(), []
 for ph, roots in ROOTS.items():
     seen_cats, queue, files = set(), [(r, 0) for r in roots], []
-    while queue:
-        cat, d = queue.pop()
+    while queue and len(seen_cats) < MAXCATS:
+        cat, d = queue.pop(0)
         if cat in seen_cats:
             continue
         seen_cats.add(cat)
