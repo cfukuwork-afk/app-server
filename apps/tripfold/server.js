@@ -518,14 +518,38 @@ const pub = require('./public-trips')({ DATA, send, readJson, limited, APP_STORE
 const mail = require('./mail')({ DATA, send, readJson, limited });
 
 const server = http.createServer(async (req, res) => {
-  // SkyLab アプリの API を tripfold.net 経由でも届くようにする（sslip.io が引けない携帯回線への対策）。中身は 3106 番へそのまま渡す
-  if (req.url.startsWith('/skylab/')) {
-    const up = http.request({ host: '127.0.0.1', port: 3106, path: req.url.slice('/skylab'.length), method: req.method, headers: { 'content-type': req.headers['content-type'] || '', 'x-forwarded-for': String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '') } }, (r) => {
-      res.writeHead(r.statusCode || 502, { 'content-type': r.headers['content-type'] || 'application/json', 'cache-control': 'no-store' });
+  // 他のアプリの API も tripfold.net 経由で届くようにする（sslip.io の住所は携帯回線の DNS で引けないことがあるため）
+  // /skylab/* → 3106, /nowmoji/* → 3103, /hush/* → 3105。HTML の中の "/..." のリンクと Location は前置きを付けて書き換える
+  const PROXY = { skylab: 3106, nowmoji: 3103, hush: 3105 };
+  const pm = /^\/(skylab|nowmoji|hush)(\/|$|\?)/.exec(req.url);
+  if (pm) {
+    const pre = '/' + pm[1];
+    const rest = req.url.slice(pre.length) || '/';
+    const h = {};
+    for (const k of ['content-type', 'content-length', 'authorization', 'accept', 'accept-language', 'user-agent', 'if-none-match', 'range']) if (req.headers[k]) h[k] = req.headers[k];
+    h['x-forwarded-for'] = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '');
+    h['x-forwarded-prefix'] = pre;
+    h['host'] = 'tripfold.net';
+    const up = http.request({ host: '127.0.0.1', port: PROXY[pm[1]], path: rest.startsWith('/') ? rest : '/' + rest, method: req.method, headers: h }, (r) => {
+      const out = {};
+      for (const [k, v] of Object.entries(r.headers)) if (!['connection', 'transfer-encoding', 'keep-alive'].includes(k)) out[k] = v;
+      if (typeof out.location === 'string' && out.location.startsWith('/')) out.location = pre + out.location;
+      if (String(out['content-type'] || '').includes('text/html')) {
+        const chunks = [];
+        r.on('data', (c) => chunks.push(c));
+        r.on('end', () => {
+          const html = Buffer.concat(chunks).toString('utf8').replace(/(href|src|action)="\/(?!\/)/g, `$1="${pre}/`);
+          delete out['content-length'];
+          res.writeHead(r.statusCode || 502, out);
+          res.end(html);
+        });
+        return;
+      }
+      res.writeHead(r.statusCode || 502, out);
       r.pipe(res);
     });
     up.on('error', () => { if (!res.headersSent) res.writeHead(502); res.end(); });
-    up.setTimeout(30000, () => up.destroy());
+    up.setTimeout(60000, () => up.destroy());
     req.pipe(up);
     return;
   }
