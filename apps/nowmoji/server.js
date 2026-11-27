@@ -179,6 +179,63 @@ function syncOut(u) {
   };
 }
 
+
+/* ---------- ウィジェット用の中身（ウィジェット自身が定期的に取りに来る。アプリを開いていなくても名前の変更なども反映される） ---------- */
+// アプリの src/widgetSync.ts と同じ形にする。画像は "art:<気分>"（端末にある絵）か "remote:/img/..."（ウィジェットが取りに行く）
+const WT = {
+  ja: { you: 'あなた', empty: 'アプリでグループを作ろう', hint: 'まだ誰も送っていません', noPost: 'まだ気分が届いていません', noPostMe: 'タップして気分を送ろう' },
+  en: { you: 'You', empty: 'Make a group in the app', hint: 'No one has posted yet', noPost: 'No mood yet', noPostMe: 'Tap to share your mood' },
+};
+function tintHex(hex, a = 0.17) {
+  const mm = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!mm) return '#F3ECE2';
+  const n = parseInt(mm[1], 16);
+  const mix = (c) => Math.round(c * a + 255 * (1 - a));
+  return '#' + [mix(n >> 16), mix((n >> 8) & 255), mix(n & 255)].map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+function widgetOut(u, tzMin, theme) {
+  const L = WT[u.lang === 'ja' ? 'ja' : 'en'];
+  const local = (ms) => new Date(ms + tzMin * 60e3);
+  const hhmmTz = (at) => {
+    const d = local(at), n = local(now());
+    const hm = `${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+    return d.toISOString().slice(0, 10) === n.toISOString().slice(0, 10) ? hm : `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${hm}`;
+  };
+  const strip = (x) => String(x || '').replace(/[‎‏‪-‮⁦-⁩]/g, '');
+  const person = (m, p, me) => {
+    let k = '', img = '';
+    if (p) {
+      if (p.kind === 'kao') k = p.kao || (p.mood ? MOODS[p.mood]?.kao || '' : '');
+      else if (p.kind === 'art' && p.mood) { k = MOODS[p.mood]?.kao || ''; img = 'art:' + p.mood; }
+      else if (p.img) img = 'remote:' + p.img;
+    }
+    k = strip(k);
+    const base = { id: m.id, n: me ? L.you : m.name, c: m.color, bg: tintHex(m.color), me };
+    if (!k && !img) return { ...base, k: '( ˘ω˘ )', img: '', t: '', w: p ? p.word || '' : me ? L.noPostMe : L.noPost, np: !p };
+    return { ...base, k, img, t: p ? hhmmTz(p.at) : '', w: p?.word || '' };
+  };
+  const s = syncOut(u);
+  const groups = {}, people = {}, personOrder = [];
+  const atOf = {};
+  for (const g of s.groups) {
+    const list = [];
+    for (const m of g.members) {
+      const p = g.latest[m.id];
+      const w = person(m, p, m.id === u.id);
+      list.push({ ...w, at: p?.at || 0 });
+      if (m.id !== u.id) { const key = `${g.id}_${m.id}`; people[key] = { ...w, g: g.id }; personOrder.push(key); atOf[key] = p?.at || 0; }
+    }
+    list.sort((a, b) => b.at - a.at);
+    groups[g.id] = { name: g.name, people: list.map(({ at, ...x }) => x) };
+  }
+  personOrder.sort((a, b) => atOf[b] - atOf[a]);
+  const order = s.groups.map((g) => g.id);
+  return {
+    GroupMoods: { groups, order, empty: L.empty, hint: L.hint, theme },
+    FriendMood: { people, order: personOrder, empty: L.empty, theme },
+  };
+}
+
 /* ---------- 通知（Expo のプッシュ） ---------- */
 function moodText(p, lang) {
   const l = lang === 'ja' ? 'ja' : 'en';
@@ -282,6 +339,12 @@ async function api(req, res, p, ip) {
   if (limited('u:' + u.id, 600, 3600e3)) throw fail(429, 'slow_down');
 
   if (p === '/v1/sync' && method === 'GET') return json(res, 200, syncOut(u));
+  if (p === '/v1/widget' && method === 'GET') {
+    const q = new URL(req.url, 'http://x').searchParams;
+    const tz = Math.max(-840, Math.min(840, Number(q.get('tz')) || 0));
+    const theme = /^#[0-9a-fA-F]{6}$/.test(q.get('theme') || '') ? q.get('theme') : '#FFFDF8';
+    return json(res, 200, widgetOut(u, tz, theme));
+  }
   if (p === '/v1/wait' && method === 'GET') return waitFor(u, Number(new URL(req.url, 'http://x').searchParams.get('v') ?? -1), res);
 
   if (p === '/v1/me' && method === 'PUT') {
