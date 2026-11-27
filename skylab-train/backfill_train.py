@@ -17,6 +17,7 @@ STATIONS = os.environ.get('STATIONS', 'EGSC,EGLL,EGPH,EGPB,EGCC,EGGD,EGAA,EGPD,E
 MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'ukmo_seamless']
 LEADS = [1, 2, 3, 5]
 VARS = {'temperature_2m': 'tmpc', 'wind_speed_10m': 'wind_ms'}
+CLOUD = 'cloud_cover'  # 雲は回帰ではなく「晴れ間（BKN/OVC/VV の層がない）」の確率の較正に使う
 OUT = os.environ.get('OUT', 'results')
 os.makedirs(OUT + '/cache', exist_ok=True)
 log = open(OUT + '/log.txt', 'a')
@@ -47,10 +48,10 @@ say('stations', STATIONS)
 
 def obs(st):
     d0, d1 = datetime.fromisoformat(START), datetime.fromisoformat(END) + timedelta(days=1)
-    q = urllib.parse.urlencode([('station', st), ('data', 'tmpf'), ('data', 'sknt'), ('tz', 'Etc/UTC'), ('format', 'onlycomma'),
+    q = urllib.parse.urlencode([('station', st), ('data', 'tmpf'), ('data', 'sknt'), ('data', 'skyc1'), ('data', 'skyc2'), ('data', 'skyc3'), ('data', 'skyc4'), ('tz', 'Etc/UTC'), ('format', 'onlycomma'),
         ('latlon', 'no'), ('missing', 'empty'), ('trace', 'empty'), ('report_type', '3'), ('report_type', '4'),
         ('year1', d0.year), ('month1', d0.month), ('day1', d0.day), ('year2', d1.year), ('month2', d1.month), ('day2', d1.day)])
-    txt = cached(f'obs_{st}_{END}.csv', 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?' + q).decode()
+    txt = cached(f'obsc_{st}_{END}.csv', 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?' + q).decode()
     best = {}  # 正時 → (時刻差分, 値)  正時の ±15 分以内で最も近い報告
     for r in csv.DictReader(io.StringIO(txt)):
         try:
@@ -66,27 +67,30 @@ def obs(st):
             v['tmpc'] = (float(r['tmpf']) - 32) * 5 / 9
         if r.get('sknt'):
             v['wind_ms'] = float(r['sknt']) * 0.514444
+        sk = [r.get(f'skyc{i}') or '' for i in range(1, 5)]
+        if any(sk):  # 雲の報告がある行だけ。BKN/OVC/VV（空の 5/8 以上）が一つもなければ「晴れ間あり」
+            v['clearish'] = 0 if any(x.strip() in ('BKN', 'OVC', 'VV') for x in sk) else 1
         if v and (h not in best or dm < best[h][0]):
             best[h] = (dm, v)
     return {h: v for h, (dm, v) in best.items()}
 
 def fcst(st):
     lon, lat = coords[st][:2]
-    hourly = [f'{v}_previous_day{l}' for v in VARS for l in LEADS]
+    hourly = [f'{v}_previous_day{l}' for v in list(VARS) + [CLOUD] for l in LEADS]
     out = defaultdict(dict)  # (時刻) → {(var, lead, model): 値}
     d = datetime.fromisoformat(START)
     while d <= datetime.fromisoformat(END):
         e = min(d + timedelta(days=89), datetime.fromisoformat(END))
         q = urllib.parse.urlencode({'latitude': lat, 'longitude': lon, 'hourly': ','.join(hourly), 'models': ','.join(MODELS),
             'start_date': d.date().isoformat(), 'end_date': e.date().isoformat(), 'wind_speed_unit': 'ms', 'timezone': 'GMT'})
-        j = json.loads(cached(f'f_{st}_{d.date()}_{e.date()}.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
+        j = json.loads(cached(f'fc_{st}_{d.date()}_{e.date()}.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
         if 'hourly' not in j:
             say('no hourly', st, d.date(), str(j)[:200])
         else:
             H = j['hourly']
             for i, ts in enumerate(H['time']):
                 t = datetime.fromisoformat(ts)
-                for v in VARS:
+                for v in list(VARS) + [CLOUD]:
                     for l in LEADS:
                         for m in MODELS:
                             x = H.get(f'{v}_previous_day{l}_{m}')
@@ -99,6 +103,7 @@ def season(t):
     return ['DJF', 'DJF', 'MAM', 'MAM', 'MAM', 'JJA', 'JJA', 'JJA', 'SON', 'SON', 'SON', 'DJF'][t.month - 1]
 
 rows = []  # 1行 = 観測点・時刻・変数・リード
+crow = []  # 雲：予報の平均・幅と「晴れ間あり」の実況
 for st in STATIONS:
     try:
         O, F = obs(st), fcst(st)
@@ -116,6 +121,12 @@ for st in STATIONS:
                 if sum(x is not None for x in fs.values()) < 2:
                     continue
                 rows.append(dict(st=st, t=t, var=v, lead=l, f=fs, y=O[t][ov])); n += 1
+        if 'clearish' in O[t]:
+            for l in LEADS:
+                fs = [fv.get((CLOUD, l, m)) for m in MODELS]
+                fs = [x for x in fs if x is not None]
+                if len(fs) >= 2:
+                    crow.append(dict(st=st, t=t, lead=l, mean=sum(fs) / len(fs), spread=max(fs) - min(fs), y=O[t]['clearish']))
     say(st, 'obs', len(O), 'fc', len(F), 'pairs', n)
 
 split = datetime.fromisoformat(SPLIT)
@@ -159,3 +170,35 @@ for v in VARS:
         result['by'][f'{v}|lead{l}'] = ev
         say(v, l, json.dumps({k: round(x['rmse'], 3) for k, x in ev.items()}))
 json.dump(result, open(OUT + '/skill.json', 'w'), indent=1)
+
+# ---- 雲：予報（4モデル平均の雲量）→「晴れ間あり」の確率の較正表。学習期間で作り、検証期間で Brier スコアを比べる
+def brier(ps, ys):
+    return sum((p - y) ** 2 for p, y in zip(ps, ys)) / max(1, len(ys))
+cal = {'definition': 'clearish = METAR に BKN/OVC/VV の層がない（空の 5/8 以上を覆う雲がない）', 'bins': list(range(0, 101, 10)), 'by_lead': {}}
+for l in LEADS:
+    tr = [r for r in crow if r['lead'] == l and r['t'] < split]
+    te = [r for r in crow if r['lead'] == l and r['t'] >= split]
+    if not tr or not te:
+        continue
+    tab = []
+    for b in range(10):
+        lo, hi = b * 10, b * 10 + 10
+        sel = [r['y'] for r in tr if lo <= r['mean'] < hi or (b == 9 and r['mean'] == 100)]
+        tab.append({'lo': lo, 'hi': hi, 'n': len(sel), 'p': (sum(sel) + 1) / (len(sel) + 2)})  # ラプラス補正
+    # 単調にする（雲量予報が多いほど晴れ間の確率は下がるはず）：隣と平均して逆転を消す
+    ps = [x['p'] for x in tab]
+    for _ in range(20):
+        for i in range(9):
+            if ps[i + 1] > ps[i]:
+                w0, w1 = tab[i]['n'] + 1, tab[i + 1]['n'] + 1
+                ps[i] = ps[i + 1] = (ps[i] * w0 + ps[i + 1] * w1) / (w0 + w1)
+    for x, p in zip(tab, ps):
+        x['p'] = round(p, 4)
+    pick = lambda m: ps[min(9, int(m // 10))]
+    ys = [r['y'] for r in te]
+    raw = [1 - r['mean'] / 100 for r in te]
+    clim = sum(r['y'] for r in tr) / len(tr)
+    cal['by_lead'][str(l)] = {'table': tab, 'test_n': len(te), 'brier_calibrated': round(brier([pick(r['mean']) for r in te], ys), 4),
+                              'brier_raw_cloudcover': round(brier(raw, ys), 4), 'brier_climatology': round(brier([clim] * len(ys), ys), 4), 'climatology': round(clim, 4)}
+    say('cloud lead', l, json.dumps({k: v for k, v in cal['by_lead'][str(l)].items() if k != 'table'}))
+json.dump(cal, open(OUT + '/cloud_calibration.json', 'w'), indent=1)
