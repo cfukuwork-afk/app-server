@@ -12,7 +12,6 @@ const zlib = require('zlib');
 const PORT = Number(process.env.PORT || 3106);
 const DATA = process.env.DATA_DIR || path.join(__dirname, 'data');
 const RAW = path.join(DATA, 'raw');
-const api = require('./api')(DATA);
 const page = (t, b) => `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${t}</title><style>body{font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}h1{font-size:22px}h2{font-size:17px;margin-top:28px}textarea,input{width:100%;font-size:16px;padding:8px;box-sizing:border-box}button{font-size:16px;padding:10px 20px;margin-top:10px}</style><h1>${t}</h1>${b}`;
 const PAGES = {
   '/': page('SkyLab', '<p>空の現象（オーロラ・星空・夕焼け・虹など）が、いつ・どこで・どの方向に見えるかを予測するアプリです。<br>SkyLab forecasts when and where you can see sky phenomena.</p><p><a href="/privacy">プライバシーポリシー / Privacy</a> ・ <a href="/terms">利用規約 / Terms</a> ・ <a href="/support">サポート / Support</a></p>'),
@@ -44,6 +43,8 @@ const POINTS = [
   { id: 'kilpisjarvi', lat: 69.0450, lon: 20.7950, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
   { id: 'helsinki', lat: 60.1699, lon: 24.9384, models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,metno_seamless' },
 ];
+const api = require('./api')(DATA, POINTS);
+
 const HOURLY = ['temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'precipitation', 'rain', 'showers', 'direct_radiation', 'diffuse_radiation', 'cloud_cover', 'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high', 'visibility', 'wind_speed_10m', 'wind_direction_10m', 'surface_pressure', 'cape', 'temperature_850hPa', 'relative_humidity_850hPa', 'temperature_925hPa', 'relative_humidity_925hPa'];
 
 const JOBS = [

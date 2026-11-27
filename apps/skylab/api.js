@@ -7,7 +7,11 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = function makeApi(DATA) {
+const S = require('./engine.js'); // tabi-shiori/skylab/src/sky.ts を esbuild でまとめたもの（アプリと同じ判定）
+
+module.exports = function makeApi(DATA, POINTS = []) {
+  const PRED = path.join(DATA, 'predictions');
+  fs.mkdirSync(PRED, { recursive: true });
   const REPORTS = path.join(DATA, 'reports.jsonl');
   const USERS = path.join(DATA, 'users.json');
   let users = {};
@@ -152,6 +156,25 @@ module.exports = function makeApi(DATA) {
   pushFn = push;
   setInterval(() => auroraAlerts().catch((e) => console.error(e)), 20 * 60e3).unref();
 
+  // ---- 予測の記録：毎時、決まった地点について、アプリと同じ判定の結果と入力を保存する（上書きしない）
+  async function logPredictions() {
+    const issued = new Date();
+    const file = path.join(PRED, issued.toISOString().slice(0, 10) + '.jsonl');
+    for (const pt of POINTS) {
+      try {
+        const w = await weather(pt.lat, pt.lon);
+        const d = { weather: w, aurora: auroraAt(pt.lat, pt.lon), kp_forecast: kpf };
+        const items = S.today(pt.lat, pt.lon, d, issued).concat(S.goldenBlue(pt.lat, pt.lon, w, issued));
+        const rec = { issued_at: issued.toISOString(), engine: S.ENGINE_VERSION, point: pt.id, lat: pt.lat, lon: pt.lon,
+          inputs: { weather_retrieved_at: w.retrieved_at, models: w.models, hours: w.hours.filter((h) => Date.parse(h.t) <= issued.getTime() + 36 * 3600e3), aurora: d.aurora, kp: kpf },
+          outputs: items };
+        fs.appendFileSync(file, JSON.stringify(rec) + '\n');
+      } catch (e) { fs.appendFileSync(file, JSON.stringify({ issued_at: issued.toISOString(), point: pt.id, error: String(e.message || e) }) + '\n'); }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  setTimeout(() => { logPredictions(); setInterval(logPredictions, 3600e3).unref(); }, 3 * 60e3).unref();
+
   // ---- HTTP
   const num = (x, lo, hi) => { const v = Number(x); return Number.isFinite(v) && v >= lo && v <= hi ? v : null; };
   function body(req) {
@@ -167,15 +190,42 @@ module.exports = function makeApi(DATA) {
       if (lat == null || lon == null) return send(res, 400, { error: 'lat/lon' });
       let w = null, err = null;
       try { w = await weather(lat, lon); } catch (e) { err = String(e.message); }
-      return send(res, 200, { lat, lon, weather: w, weather_error: err, aurora: auroraAt(lat, lon), kp_forecast: kpf, note: 'blend=simple mean (not yet validated)' });
+      return send(res, 200, { lat, lon, issued_at: new Date().toISOString(), engine: S.ENGINE_VERSION, weather: w, weather_error: err, aurora: auroraAt(lat, lon), kp_forecast: kpf, note: 'blend=simple mean (not yet validated)' });
     }
     if (p === '/api/report' && req.method === 'POST') {
       const b = await body(req);
       const lat = num(b?.lat, -90, 90), lon = num(b?.lon, -180, 180);
-      if (!b || !PHENOMENA.includes(b.phenomenon) || typeof b.seen !== 'boolean' || lat == null || lon == null) return send(res, 400, { error: 'bad report' });
-      const rec = { received_at: new Date().toISOString(), observed_at: typeof b.at === 'string' ? b.at.slice(0, 30) : null, phenomenon: b.phenomenon, seen: b.seen, lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100, strength: num(b.strength, 0, 3), dir: num(b.dir, 0, 360), user: String(b.user || '').slice(0, 40), app: String(b.app || '').slice(0, 20), shown: b.shown && typeof b.shown === 'object' ? JSON.stringify(b.shown).slice(0, 2000) : null };
-      fs.appendFile(REPORTS, JSON.stringify(rec) + '\n', () => {});
+      const OUT = ['seen', 'looked_not_seen', 'clouded', 'not_observed'];
+      if (!b || !PHENOMENA.includes(b.phenomenon) || !OUT.includes(b.outcome) || lat == null || lon == null) return send(res, 400, { error: 'bad report' });
+      // 報告の時点でサーバーが持っている入力（その地点の予報の写し・オーロラ予報）を、上書きせずに一緒に残す
+      const k = lat.toFixed(1) + ',' + lon.toFixed(1);
+      const c = cache.get(k);
+      const now = Date.now();
+      const inputs = c ? { weather_retrieved_at: c.v.retrieved_at, models: c.v.models, hours: c.v.hours.filter((h) => Math.abs(Date.parse(h.t) - now) <= 6 * 3600e3) } : null;
+      const rec = {
+        received_at: new Date().toISOString(), observed_at: typeof b.at === 'string' ? b.at.slice(0, 30) : null,
+        phenomenon: b.phenomenon, outcome: b.outcome,
+        label: b.outcome === 'seen' ? 1 : b.outcome === 'looked_not_seen' ? 0 : null, // 学習用：観測していない・雲で遮られたは「発生しなかった」に使わない
+        lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100, accuracy_m: num(b.accuracy, 0, 1e6),
+        strength: num(b.strength, 1, 3), beauty: num(b.beauty, 1, 5), dir: num(b.dir, 0, 360),
+        photo_consent: b.photo_consent === true,
+        user: String(b.user || '').slice(0, 40), app: String(b.app || '').slice(0, 20), engine: String(b.engine || '').slice(0, 20), server_engine: S.ENGINE_VERSION,
+        shown: b.shown && typeof b.shown === 'object' ? b.shown : null, shown_issued_at: typeof b.issued_at === 'string' ? b.issued_at.slice(0, 30) : null,
+        inputs, aurora_input: auroraAt(lat, lon), kp_input: kpf ? kpf.filter((x) => Math.abs(Date.parse(x.t) - now) <= 12 * 3600e3) : null,
+      };
+      const line = JSON.stringify(rec);
+      if (line.length > 200000) return send(res, 413, { error: 'too large' });
+      fs.appendFile(REPORTS, line + '\n', () => {});
       return send(res, 200, { ok: true });
+    }
+    if (p === '/api/geo' && req.method === 'GET') {
+      const q = String(u.searchParams.get('q') || '').slice(0, 80).trim();
+      if (q.length < 2) return send(res, 200, { results: [] });
+      try {
+        const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?' + new URLSearchParams({ name: q, count: 8, language: u.searchParams.get('lang') === 'ja' ? 'ja' : 'en', format: 'json' }), { signal: AbortSignal.timeout(10000) });
+        const j = await r.json();
+        return send(res, 200, { results: (j.results || []).map((x) => ({ name: x.name, admin: x.admin1 || '', country: x.country || '', lat: x.latitude, lon: x.longitude })) });
+      } catch { return send(res, 502, { results: [] }); }
     }
     if (p === '/api/register' && req.method === 'POST') {
       const b = await body(req);
