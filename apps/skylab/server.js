@@ -29,11 +29,14 @@ const JOBS = [
   ...POINTS.map((p) => ({
     id: 'om_' + p.id,
     every: 60, // 分
-    url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: p.lat, longitude: p.lon, hourly: HOURLY.join(','), timezone: 'GMT', forecast_days: 3, past_hours: 0 }).toString(),
+    // 複数モデルを並べて保存（あとで地域・季節・リードタイム別の重み付けを学習するため）
+    url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: p.lat, longitude: p.lon, hourly: HOURLY.join(','), models: 'ecmwf_ifs025,gfs_seamless,icon_seamless,ukmo_seamless', timezone: 'GMT', forecast_days: 3 }).toString(),
   })),
   // モデルの最新実行の初期時刻（予報の発行時刻を記録するため）
   { id: 'om_meta_ecmwf', every: 60, url: () => 'https://api.open-meteo.com/data/ecmwf_ifs025/static/meta.json' },
   { id: 'om_meta_ukmo', every: 60, url: () => 'https://api.open-meteo.com/data/ukmo_global_deterministic_10km/static/meta.json' },
+  { id: 'om_meta_gfs', every: 60, url: () => 'https://api.open-meteo.com/data/ncep_gfs025/static/meta.json' },
+  { id: 'om_meta_icon', every: 60, url: () => 'https://api.open-meteo.com/data/dwd_icon/static/meta.json' },
   // 実況（正解データ）：空港の METAR（視程・天気現象・雲）。aviationweather.gov（米国政府）。地点の近くの空港
   { id: 'metar_uk', every: 60, url: () => 'https://aviationweather.gov/api/data/metar?' + new URLSearchParams({ ids: 'EGSC,EGLL,EGNC,EGPH,EGPB,EGOV', format: 'json', hours: 3 }).toString() },
   // 世界中の METAR（全空港の最新、毎分更新のまとめファイル）。正解データの世界版
@@ -84,7 +87,7 @@ async function runWorld() {
   // 6時間ごと（モデルの実行の間隔に合わせる）。50地点ずつまとめて1回の問い合わせに
   for (let i = 0; i < WORLD.length; i += 50) {
     const b = WORLD.slice(i, i + 50);
-    await run({ id: 'om_world_' + String(i / 50).padStart(2, '0'), url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: b.map((x) => x.lat).join(','), longitude: b.map((x) => x.lon).join(','), hourly: WORLD_HOURLY.join(','), timezone: 'GMT', forecast_days: 3 }).toString() });
+    await run({ id: 'om_world_' + String(i / 50).padStart(2, '0'), url: () => 'https://api.open-meteo.com/v1/forecast?' + new URLSearchParams({ latitude: b.map((x) => x.lat).join(','), longitude: b.map((x) => x.lon).join(','), hourly: WORLD_HOURLY.join(','), models: 'ecmwf_ifs025,gfs_seamless', timezone: 'GMT', forecast_days: 3 }).toString() });
     await new Promise((r) => setTimeout(r, 20000));
   }
 }
