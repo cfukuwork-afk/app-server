@@ -28,7 +28,9 @@ module.exports = function makeApi(DATA) {
   function setKpForecast(buf) {
     try {
       const rows = JSON.parse(buf.toString());
-      kpf = rows.slice(1).map((r) => ({ t: r[0].replace(' ', 'T') + 'Z', kp: Number(r[1]), kind: r[2], scale: r[3] }));
+      // 形式は2通りある（旧：先頭行が見出しの配列、新：オブジェクトの配列）
+      const arr = Array.isArray(rows[0]) ? rows.slice(1).map((r) => ({ time_tag: r[0], kp: r[1], observed: r[2], noaa_scale: r[3] })) : rows;
+      kpf = arr.map((r) => ({ t: String(r.time_tag).replace(' ', 'T').replace(/Z?$/, 'Z'), kp: Number(r.kp ?? r.Kp), kind: r.observed, scale: r.noaa_scale ?? null })).filter((r) => Number.isFinite(r.kp));
     } catch (e) { console.error('kp parse', e.message); }
   }
   const R = 6371;
@@ -78,6 +80,7 @@ module.exports = function makeApi(DATA) {
     if (!r.ok) throw new Error('weather ' + r.status);
     const j = await r.json();
     const H = j.hourly;
+    const lim = Date.now() + 72 * 3600e3, from = Date.now() - 3 * 3600e3;
     const hours = H.time.map((t, i) => {
       const o = { t: t + ':00Z' };
       for (const v of VARS) {
@@ -85,7 +88,7 @@ module.exports = function makeApi(DATA) {
         o[v] = xs.length ? { mean: Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10, min: Math.min(...xs), max: Math.max(...xs), n: xs.length } : null;
       }
       return o;
-    });
+    }).filter((o) => { const x = Date.parse(o.t); return x >= from && x <= lim; });
     const v = { models: MODELS, hours, retrieved_at: new Date().toISOString() };
     cache.set(k, { at: Date.now(), v });
     if (cache.size > 5000) cache.delete(cache.keys().next().value);
