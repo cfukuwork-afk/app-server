@@ -540,7 +540,7 @@ const server = http.createServer(async (req, res) => {
       const body = (p === '/terms' ? TERMS : PRIVACY)[lang];
       return html(res, 200, shell(lang, p === '/terms' ? (lang === 'ja' ? '利用規約' : 'Terms of Use') : lang === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy', body + `<p class="small" style="margin-top:30px"><a href="?lang=${lang === 'ja' ? 'en' : 'ja'}">${lang === 'ja' ? 'English' : '日本語'}</a></p>`));
     }
-    if (p === '/' || p === '/support') {
+    if ((p === '/' || p === '/support') && req.method !== 'POST') {
       const lang = pageLang(req, url.searchParams);
       const ja = lang === 'ja';
       return html(res, 200, shell(lang, 'Nowmoji', `<h1>${ja ? '親しい人のロック画面に、いまの気分を。' : 'Your mood, on your close friends’ lock screens.'}</h1><p>${ja ? '顔文字やイラストで、いまの気分を親しい人だけに届けるアプリです。届いた気分は相手のロック画面やホーム画面のウィジェットに表示されます。' : 'Share how you feel right now with kaomoji and cute illustrations, only with the people you invite. It shows up on their lock screen and home screen widgets.'}</p><h2>${ja ? 'お問い合わせ' : 'Contact'}</h2>${url.searchParams.get('sent') ? `<p><b>${ja ? '送信しました。ありがとうございます。' : 'Sent. Thank you!'}</b></p>` : ''}<form method="post" action="/support?lang=${lang}"><p><textarea name="msg" required maxlength="2000" rows="6" style="width:100%;font:inherit;padding:10px;border-radius:12px;border:1px solid #e3d9cd" placeholder="${ja ? '内容（返信が必要な場合は連絡先も書いてください）' : 'Your message (include a way to reach you if you need a reply)'}"></textarea></p><button class="btn">${ja ? '送信する' : 'Send'}</button></form><p><a href="/terms?lang=${lang}">${ja ? '利用規約' : 'Terms of Use'}</a> ・ <a href="/privacy?lang=${lang}">${ja ? 'プライバシーポリシー' : 'Privacy Policy'}</a></p>`));
