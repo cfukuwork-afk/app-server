@@ -34,6 +34,8 @@ const JOBS = [
   // モデルの最新実行の初期時刻（予報の発行時刻を記録するため）
   { id: 'om_meta_ecmwf', every: 60, url: () => 'https://api.open-meteo.com/data/ecmwf_ifs025/static/meta.json' },
   { id: 'om_meta_ukmo', every: 60, url: () => 'https://api.open-meteo.com/data/ukmo_global_deterministic_10km/static/meta.json' },
+  // 実況（正解データ）：空港の METAR（視程・天気現象・雲）。aviationweather.gov（米国政府）。地点の近くの空港
+  { id: 'metar_uk', every: 60, url: () => 'https://aviationweather.gov/api/data/metar?' + new URLSearchParams({ ids: 'EGSC,EGLL,EGNC,EGPH,EGPB,EGOV', format: 'json', hours: 3 }).toString() },
   // 宇宙天気（NOAA SWPC）
   // 太陽風（DSCOVR 等、1分値）。旧 /products/solar-wind/ は廃止（404）。ファイルは重なりを持たせて3時間ごとに保存
   { id: 'swpc_rtsw_mag', every: 180, url: () => 'https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json' },
