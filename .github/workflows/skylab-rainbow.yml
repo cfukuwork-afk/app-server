@@ -1,0 +1,21 @@
+name: skylab-rainbow
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/skylab-rainbow-request']
+permissions:
+  contents: write
+jobs:
+  rainbow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: cd skylab-labels && python rainbow_conditions.py
+      - name: save
+        run: |
+          mkdir -p skylab-labels/results && cp skylab-labels/out/rainbow_* skylab-labels/results/
+          git config user.name skylab-bot && git config user.email skylab-bot@users.noreply.github.com
+          git add skylab-labels/results && git commit -m "SkyLab rainbow conditions (H-B1)" && git pull --rebase && git push
