@@ -1,5 +1,7 @@
 name: skylab-train
 on:
+  schedule:
+    - cron: '17 3 * * *'   # 毎日 03:17 UTC（データ更新ぶんを学習・検証）
   workflow_dispatch:
   push:
     paths: ['.github/skylab-train-request']
@@ -22,6 +24,6 @@ jobs:
       - run: cd skylab-train && OUT=out python backfill_train.py
       - name: save results
         run: |
-          mkdir -p skylab-train/results && cp skylab-train/out/skill.json skylab-train/out/log.txt skylab-train/results/
+          mkdir -p skylab-train/results/history && cp skylab-train/out/skill.json skylab-train/out/log.txt skylab-train/results/ && cp skylab-train/out/skill.json skylab-train/results/history/$(date -u +%F).json
           git config user.name skylab-bot && git config user.email skylab-bot@users.noreply.github.com
           git add skylab-train/results && git commit -m "SkyLab training results" && git pull --rebase && git push

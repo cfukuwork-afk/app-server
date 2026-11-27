@@ -10,7 +10,8 @@ from datetime import datetime, timedelta, timezone
 sys.path.insert(0, os.path.dirname(__file__))
 from blend import Blender, Sample, evaluate
 
-START, END = os.environ.get('START', '2024-03-01'), os.environ.get('END', '2026-10-31')
+START = os.environ.get('START', '2024-03-01')
+END = os.environ.get('END') or (datetime.now(timezone.utc) - timedelta(days=2)).date().isoformat()
 SPLIT = os.environ.get('SPLIT', '2025-09-01')          # これより前で学習、以後で検証
 STATIONS = os.environ.get('STATIONS', 'EGSC,EGLL,EGPH,EGPB,EGCC,EGGD,EGAA,EGPD,EGBB,EGNT,EGHH,EGPK').split(',')
 MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'ukmo_seamless']
