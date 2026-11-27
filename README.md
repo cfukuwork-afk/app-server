@@ -22,3 +22,4 @@ ConoHa のコンソールで root にログインして、次を実行する。
 |---|---|---|
 | tripfold | https://tripfold.160-251-171-249.sslip.io | 旅行の共有（共同編集・写真）、場所探しの使い回し |
 | hush | https://hush.160-251-171-249.sslip.io | 静かな作業部屋（友だちと机を並べて作業する） |
+| skylab | https://skylab.160-251-171-249.sslip.io/status | SkyLab のデータ収集（予報・太陽風を取得時刻つきで保存。データは非公開） |
