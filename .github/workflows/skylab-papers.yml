@@ -1,0 +1,17 @@
+name: skylab-papers
+on:
+  workflow_dispatch:
+  push:
+    paths: ['skylab-papers/**', '.github/workflows/skylab-papers.yml']
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install pypdf
+      - run: cd skylab-papers && mkdir -p out && python fetch_papers.py
+      - uses: actions/upload-artifact@v4
+        with: {name: papers-digest, path: skylab-papers/out/papers_digest.json, retention-days: 30}

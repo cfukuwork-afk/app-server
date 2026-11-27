@@ -34,12 +34,15 @@ def load(t):
         if und is not None: x[d == und] = 0
         if GEO is None:
             wh = {k: (v.decode() if isinstance(v, bytes) else v) for k, v in f['where'].attrs.items()}
+            say('where', sorted(wh))
             tr = Transformer.from_crs(CRS.from_epsg(4326), CRS.from_proj4(wh['projdef']), always_xy=True)
-            GEO = {}
+            if 'UL_x' in wh: ux, uy = float(wh['UL_x']), float(wh['UL_y'])
+            else: ux, uy = tr.transform(float(wh['UL_lon']), float(wh['UL_lat']))
+            g = {}
             for c, (la, lo) in CITIES.items():
                 X, Y = tr.transform(lo, la)
-                col = int((X - float(wh['UL_x'])) / float(wh['xscale'])); row = int((float(wh['UL_y']) - Y) / float(wh['yscale']))
-                GEO[c] = (row, col)
+                g[c] = (int((uy - Y) / float(wh['yscale'])), int((X - ux) / float(wh['xscale'])))
+            GEO = g
             say('grid', d.shape, {c: GEO[c] for c in list(GEO)[:3]})
     return x
 def at(field, c):
@@ -58,7 +61,7 @@ def nwp(c, day):
     return {}
 LEADS = [60, 120, 180]
 random.seed(3)
-today = dt.datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+today = dt.datetime.now(dt.UTC).replace(tzinfo=None).replace(minute=0, second=0, microsecond=0)
 rows = []
 for dd in sorted(random.sample(range(10, 700), int(os.environ.get('N_DAYS', '45')))):
     t0 = (today - dt.timedelta(days=dd)).replace(hour=random.choice([9, 12, 15]))
