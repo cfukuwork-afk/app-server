@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - run: pip install boto3 h5py pysteps opencv-python-headless
-      - run: cd skylab-radar && python radar_eval.py
+      - run: pip install boto3 h5py pysteps opencv-python-headless pyproj
+      - run: cd skylab-radar && python ${{ vars.RADAR_SCRIPT || 'radar_blend.py' }}
       - name: save
         run: |
           mkdir -p skylab-radar/results && cp skylab-radar/out/*.txt skylab-radar/out/*.json skylab-radar/results/ 2>/dev/null || true
