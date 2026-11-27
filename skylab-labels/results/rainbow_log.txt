@@ -1,0 +1,154 @@
+usable 918
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 50
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 100
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 150
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 1 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 200
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 250
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 300
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 350
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 400
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 450
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 500
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 550
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 600
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 650
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 700
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 750
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 800
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 850
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+done 900
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+retry 0 <urlopen error _ssl.c:994: The handshake operation timed out>
+{"hypothesis": "H-B1", "photo": {"n": 918, "A_sun_0_42": 0.6656, "B_rain_pm1h": 0.4673, "C_direct_sun": 0.8159, "ABC_all": 0.2985, "A_and_B": 0.3344, "sun_alt_median": 14.195892329502577}, "control": {"n": 4590, "A_sun_0_42": 0.7118, "B_rain_pm1h": 0.3264, "C_direct_sun": 0.9205, "ABC_all": 0.1688, "A_and_B": 0.2113, "sun_alt_median": 28.57089913780519}, "lift_ABC": 1.77}

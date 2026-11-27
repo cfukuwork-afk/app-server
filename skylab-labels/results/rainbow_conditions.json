@@ -1,0 +1,22 @@
+{
+ "hypothesis": "H-B1",
+ "photo": {
+  "n": 918,
+  "A_sun_0_42": 0.6656,
+  "B_rain_pm1h": 0.4673,
+  "C_direct_sun": 0.8159,
+  "ABC_all": 0.2985,
+  "A_and_B": 0.3344,
+  "sun_alt_median": 14.195892329502577
+ },
+ "control": {
+  "n": 4590,
+  "A_sun_0_42": 0.7118,
+  "B_rain_pm1h": 0.3264,
+  "C_direct_sun": 0.9205,
+  "ABC_all": 0.1688,
+  "A_and_B": 0.2113,
+  "sun_alt_median": 28.57089913780519
+ },
+ "lift_ABC": 1.77
+}
