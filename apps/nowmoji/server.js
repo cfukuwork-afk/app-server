@@ -189,6 +189,7 @@ function moodText(p, lang) {
   return '';
 }
 async function notify(p, g, from) {
+  bump(g.members.filter((id) => id !== from.id));
   const msgs = [];
   for (const id of g.members) {
     if (id === from.id) continue;
@@ -214,6 +215,7 @@ async function notify(p, g, from) {
 }
 // 名前の変更・参加など、ウィジェットの中身を書き換えたいときの静かな通知
 async function silent(g, exceptId, data) {
+  bump(g.members.filter((id) => id !== exceptId));
   const msgs = g.members.filter((id) => id !== exceptId).map((id) => db.users[id]).filter((u) => u?.pushToken).map((u) => ({ to: u.pushToken, _contentAvailable: true, priority: 'normal', data }));
   if (!msgs.length) return;
   try {
@@ -232,6 +234,29 @@ async function saveImage(b64) {
   const name = rid(12) + '.' + ext;
   await fsp.writeFile(path.join(IMG, name), buf);
   return name;
+}
+
+
+/* ---------- すぐ届く更新（ロングポーリング）：アプリを開いている間、変更があれば数秒以内に知らせる ---------- */
+// 携帯回線・Wi-Fi どちらでも普通の HTTPS で動く（中継やファイアウォールに強い）。最大 25 秒待って、何もなければ空で返す
+const ver = new Map(); // ユーザー → 変更の番号
+const waiters = new Map(); // ユーザー → 待っている応答
+function bump(ids) {
+  for (const id of ids) {
+    ver.set(id, (ver.get(id) || 0) + 1);
+    const ws = waiters.get(id);
+    if (ws) { waiters.delete(id); for (const fn of ws) fn(); }
+  }
+}
+function waitFor(u, since, res) {
+  const cur = ver.get(u.id) || 0;
+  if (since !== cur) return json(res, 200, { v: cur, changed: since >= 0 && since !== cur });
+  let done = false;
+  const finish = () => { if (done) return; done = true; clearTimeout(tm); const set = waiters.get(u.id); if (set) set.delete(finish); json(res, 200, { v: ver.get(u.id) || 0, changed: true }); };
+  const tm = setTimeout(() => { if (done) return; done = true; const set = waiters.get(u.id); if (set) set.delete(finish); json(res, 200, { v: ver.get(u.id) || 0, changed: false }); }, 25000);
+  if (!waiters.has(u.id)) waiters.set(u.id, new Set());
+  waiters.get(u.id).add(finish);
+  res.on('close', () => { if (!done) { done = true; clearTimeout(tm); const set = waiters.get(u.id); if (set) set.delete(finish); } });
 }
 
 /* ---------- API ---------- */
@@ -255,6 +280,7 @@ async function api(req, res, p, ip) {
   if (limited('u:' + u.id, 600, 3600e3)) throw fail(429, 'slow_down');
 
   if (p === '/v1/sync' && method === 'GET') return json(res, 200, syncOut(u));
+  if (p === '/v1/wait' && method === 'GET') return waitFor(u, Number(new URL(req.url, 'http://x').searchParams.get('v') ?? -1), res);
 
   if (p === '/v1/me' && method === 'PUT') {
     const b = await readJson(req);
