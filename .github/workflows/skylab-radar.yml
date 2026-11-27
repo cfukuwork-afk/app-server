@@ -8,13 +8,13 @@ permissions:
 jobs:
   radar:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - run: pip install boto3
-      - run: cd skylab-radar && python ${SCRIPT:-discover.py}
+      - run: pip install boto3 h5py pysteps opencv-python-headless
+      - run: cd skylab-radar && python radar_eval.py
       - name: save
         run: |
           mkdir -p skylab-radar/results && cp skylab-radar/out/*.txt skylab-radar/out/*.json skylab-radar/results/ 2>/dev/null || true

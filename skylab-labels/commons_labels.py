@@ -4,13 +4,24 @@
 import csv, json, os, re, time, urllib.parse, urllib.request
 API = 'https://commons.wikimedia.org/w/api.php'
 UA = {'User-Agent': 'SkyLab-research/0.1 (atmospheric optics forecast verification; github.com/cfukuwork-afk/app-server)'}
-ROOTS = {
-  'rainbow': ['Category:Rainbows'],
-  'sunset': ['Category:Sunsets in the United Kingdom', 'Category:Sunsets in England', 'Category:Sunsets in Scotland', 'Category:Sunsets in Wales'],
-  'sunrise': ['Category:Sunrises in the United Kingdom', 'Category:Sunrises in England', 'Category:Sunrises in Scotland'],
-  'aurora': ['Category:Aurora borealis in the United Kingdom', 'Category:Aurorae in the United Kingdom', 'Category:Aurora borealis in Scotland', 'Category:Aurora borealis in England'],
-  'halo': ['Category:22° halos', 'Category:Sun dogs', 'Category:Halos (optical phenomenon)'],
+# 起点のカテゴリは名前を決め打ちせず、Commons のカテゴリ検索で見つける（前回、決め打ちの名前が存在せず 0 件だった）
+KEYWORDS = {
+  'rainbow': ['Rainbows'],
+  'sunset': ['Sunsets', 'Sunsets in Europe', 'Afterglow', 'Red sky'],
+  'sunrise': ['Sunrises', 'Dawn'],
+  'aurora': ['Aurora borealis', 'Polar lights', 'Aurorae'],
+  'halo': ['Halo (optical phenomenon)', 'Sun dogs', 'Parhelion', '22 degree halo', 'Circumhorizontal arc'],
+  'noctilucent': ['Noctilucent clouds'],
+  'fogbow': ['Fog bows', 'Glory (optical phenomenon)'],
 }
+def find_roots(words):
+    out = []
+    for w in words:
+        j = api(action='query', list='search', srsearch=w, srnamespace='14', srlimit='5')
+        for h in j.get('query', {}).get('search', []):
+            if h['title'] not in out:
+                out.append(h['title'])
+    return out
 MAXDEPTH = int(os.environ.get('DEPTH', '2'))
 MAXCATS = int(os.environ.get('MAXCATS', '400'))  # 1現象あたりのカテゴリ数の上限（前回は全部たどって時間切れ）
 T0 = time.time()
@@ -55,6 +66,8 @@ def details(titles):
         yield dict(file=p['title'], taken_raw=g('DateTimeOriginal'), lat=lat, lon=lon, gps_source=src if lat else '',
                    license=g('LicenseShortName'), artist_present=bool(g('Artist')))
 
+ROOTS = {ph: find_roots(ws) for ph, ws in KEYWORDS.items()}
+say('roots', json.dumps(ROOTS, ensure_ascii=False))
 seen_files, rows = set(), []
 for ph, roots in ROOTS.items():
     seen_cats, queue, files = set(), [(r, 0) for r in roots], []
