@@ -9,6 +9,32 @@ const path = require('path');
 
 const S = require('./engine.js'); // tabi-shiori/skylab/src/sky.ts を esbuild でまとめたもの（アプリと同じ判定）
 
+// オーロラ通知の文面（アプリと同じ10言語。中国語は zh＝簡体字で送る）
+const DIRS = {
+  ja: ['北', '北東', '東', '南東', '南', '南西', '西', '北西', '真上'],
+  en: ['northern', 'north-eastern', 'eastern', 'south-eastern', 'southern', 'south-western', 'western', 'north-western', 'overhead'],
+  ko: ['북쪽', '북동쪽', '동쪽', '남동쪽', '남쪽', '남서쪽', '서쪽', '북서쪽', '머리 위'],
+  zh: ['北方', '东北方', '东方', '东南方', '南方', '西南方', '西方', '西北方', '头顶'],
+  es: ['norte', 'noreste', 'este', 'sureste', 'sur', 'suroeste', 'oeste', 'noroeste', 'cenit'],
+  fr: ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ouest', 'ouest', 'nord-ouest', 'zénith'],
+  de: ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten', 'Zenit'],
+  it: ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ovest', 'ovest', 'nord-ovest', 'zenit'],
+  pt: ['norte', 'nordeste', 'leste', 'sudeste', 'sul', 'sudoeste', 'oeste', 'noroeste', 'zênite'],
+};
+const AURORA_MSG = {
+  ja: { title: 'オーロラのチャンス', body: (d, c) => (d === '真上' ? `いま真上の空にオーロラが出ている予報です（雲 ${c}%）` : `いま${d}の空にオーロラが出ている予報です（雲 ${c}%）`) },
+  en: { title: 'Aurora chance', body: (d, c) => (d === 'overhead' ? `Aurora forecast overhead now (cloud ${c}%)` : `Aurora forecast in the ${d} sky now (cloud ${c}%)`) },
+  ko: { title: '오로라 기회', body: (d, c) => `지금 ${d} 하늘에 오로라가 나타날 것으로 예보됩니다 (구름 ${c}%)` },
+  zh: { title: '极光机会', body: (d, c) => `预报现在${d}的天空有极光（云量 ${c}%）` },
+  es: { title: 'Oportunidad de aurora', body: (d, c) => `Se prevé aurora ahora en el cielo (${d}) (nubes ${c}%)` },
+  fr: { title: 'Chance d’aurore', body: (d, c) => `Aurore prévue maintenant dans le ciel (${d}) (nuages ${c} %)` },
+  de: { title: 'Polarlicht-Chance', body: (d, c) => `Jetzt Polarlicht am Himmel im ${d} vorhergesagt (Wolken ${c} %)` },
+  it: { title: 'Occasione di aurora', body: (d, c) => `Aurora prevista ora nel cielo (${d}) (nubi ${c}%)` },
+  pt: { title: 'Chance de aurora', body: (d, c) => `Aurora prevista agora no céu (${d}) (nuvens ${c}%)` },
+};
+const LANGS = Object.keys(AURORA_MSG);
+
+
 module.exports = function makeApi(DATA, POINTS = []) {
   const PRED = path.join(DATA, 'predictions');
   // 晴れ間の確率の較正表（GitHub Actions の学習結果を、検証の数字を確かめてから calibration.json として置く）
@@ -140,16 +166,15 @@ module.exports = function makeApi(DATA, POINTS = []) {
       } catch {}
       if (cloud != null && cloud > 60) continue;
       u.lastAlert = now;
-      const ja = u.lang === 'ja';
-      msgs.push({ to: u.token, sound: 'default', title: ja ? 'オーロラのチャンス' : 'Aurora chance', body: ja ? `いま${dirName(a.visible_dir, ja)}の空にオーロラが出ている予報です（雲 ${cloud ?? '?'}%）` : `Aurora forecast in the ${dirName(a.visible_dir, ja)} sky now (cloud ${cloud ?? '?'}%)`, data: { t: 'aurora' } });
+      const M = AURORA_MSG[u.lang] || AURORA_MSG.en;
+      msgs.push({ to: u.token, sound: 'default', title: M.title, body: M.body(dirName(a.visible_dir, u.lang), cloud ?? '?'), data: { t: 'aurora' } });
     }
     if (msgs.length) { saveUsers(); pushFn(msgs); }
   }
-  function dirName(d, ja) {
-    if (d == null) return ja ? '真上' : 'overhead';
-    const J = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'], E = ['northern', 'north-eastern', 'eastern', 'south-eastern', 'southern', 'south-western', 'western', 'north-western'];
-    const i = Math.round(d / 45) % 8;
-    return ja ? J[i] : E[i];
+  function dirName(d, lang) {
+    const D = DIRS[lang] || DIRS.en;
+    if (d == null) return D[8];
+    return D[Math.round((((d % 360) + 360) % 360) / 45) % 8];
   }
   async function push(msgs) {
     for (let i = 0; i < msgs.length; i += 90) {
@@ -232,7 +257,7 @@ module.exports = function makeApi(DATA, POINTS = []) {
       const q = String(u.searchParams.get('q') || '').slice(0, 80).trim();
       if (q.length < 2) return send(res, 200, { results: [] });
       try {
-        const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?' + new URLSearchParams({ name: q, count: 8, language: u.searchParams.get('lang') === 'ja' ? 'ja' : 'en', format: 'json' }), { signal: AbortSignal.timeout(10000) });
+        const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?' + new URLSearchParams({ name: q, count: 8, language: LANGS.includes(u.searchParams.get('lang')) ? u.searchParams.get('lang') : 'en', format: 'json' }), { signal: AbortSignal.timeout(10000) });
         const j = await r.json();
         return send(res, 200, { results: (j.results || []).map((x) => ({ name: x.name, admin: x.admin1 || '', country: x.country || '', lat: x.latitude, lon: x.longitude })) });
       } catch { return send(res, 502, { results: [] }); }
@@ -243,7 +268,7 @@ module.exports = function makeApi(DATA, POINTS = []) {
       const lat = num(b?.lat, -90, 90), lon = num(b?.lon, -180, 180);
       if (!id || lat == null || lon == null) return send(res, 400, { error: 'bad' });
       const prev = users[id] || {};
-      users[id] = { ...prev, token: typeof b.token === 'string' ? b.token.slice(0, 200) : prev.token || null, lat: Math.round(lat * 10) / 10, lon: Math.round(lon * 10) / 10, lang: b.lang === 'ja' ? 'ja' : 'en', aurora: b.aurora !== false, threshold: num(b.threshold, 1, 100) || 10, at: new Date().toISOString() };
+      users[id] = { ...prev, token: typeof b.token === 'string' ? b.token.slice(0, 200) : prev.token || null, lat: Math.round(lat * 10) / 10, lon: Math.round(lon * 10) / 10, lang: LANGS.includes(b.lang) ? b.lang : 'en', aurora: b.aurora !== false, threshold: num(b.threshold, 1, 100) || 10, at: new Date().toISOString() };
       saveUsers();
       return send(res, 200, { ok: true });
     }
