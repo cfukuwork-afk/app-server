@@ -10,6 +10,24 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
+// 通知文（アプリと同じ10言語）
+const LANGS = ['ja', 'en', 'ko', 'zh-Hans', 'zh-Hant', 'es', 'fr', 'de', 'it', 'pt'];
+const langOf = (l) => (LANGS.includes(l) ? l : l === 'zh' ? 'zh-Hans' : 'en');
+const START_MSG = {
+  ja: (n, w) => `${n}さんが机に向かいました（${w}）`,
+  en: (n, w) => `${n} sat down to work (${w})`,
+  ko: (n, w) => `${n}님이 책상에 앉았어요 (${w})`,
+  'zh-Hans': (n, w) => `${n} 坐到书桌前了（${w}）`,
+  'zh-Hant': (n, w) => `${n} 坐到書桌前了（${w}）`,
+  es: (n, w) => `${n} se sentó a trabajar (${w})`,
+  fr: (n, w) => `${n} s’est mis au travail (${w})`,
+  de: (n, w) => `${n} hat sich an die Arbeit gesetzt (${w})`,
+  it: (n, w) => `${n} si è messo al lavoro (${w})`,
+  pt: (n, w) => `${n} sentou para trabalhar (${w})`,
+};
+const ROOM_DEFAULT = { ja: '作業部屋', en: 'Study room', ko: '작업실', 'zh-Hans': '自习室', 'zh-Hant': '自習室', es: 'Sala de estudio', fr: 'Salle d’étude', de: 'Lernraum', it: 'Aula studio', pt: 'Sala de estudos' };
+
+
 const PORT = Number(process.env.PORT || 3105);
 const DATA = process.env.DATA_DIR || path.join(__dirname, 'data');
 fs.mkdirSync(DATA, { recursive: true });
@@ -208,8 +226,7 @@ function notifyStart(u) {
       const o = db.users[id];
       if (!o?.pushToken || o.notify === false || (o.blocked || []).includes(u.id) || (o.muted || []).includes(r.id)) continue;
       sent.add(id);
-      const ja = o.lang === 'ja';
-      msgs.push({ to: o.pushToken, title: r.members.length > 2 ? r.name : 'Hush', body: ja ? `${u.name}さんが机に向かいました（${u.live.what}）` : `${u.name} sat down to work (${u.live.what})`, sound: 'default', data: { t: 'start', r: r.id } });
+      msgs.push({ to: o.pushToken, title: r.members.length > 2 ? r.name : 'Hush', body: (START_MSG[langOf(o.lang)] || START_MSG.en)(u.name, u.live.what), sound: 'default', data: { t: 'start', r: r.id } });
     }
   }
   push(msgs);
@@ -253,7 +270,7 @@ async function api(req, res, p, ip) {
     const name = clip(b.name, 5);
     if (!name) throw fail(400, 'name');
     const token = rid(24);
-    const u = { id: rid(8), tokenHash: hash(token), name, color: COLORS[Math.floor(Math.random() * COLORS.length)], lang: b.lang === 'ja' ? 'ja' : 'en', tz: Number.isFinite(b.tz) ? Math.max(-840, Math.min(840, b.tz)) : 540, pushToken: null, blocked: [], muted: [], live: null, createdAt: now(), seen: now() };
+    const u = { id: rid(8), tokenHash: hash(token), name, color: COLORS[Math.floor(Math.random() * COLORS.length)], lang: langOf(b.lang), tz: Number.isFinite(b.tz) ? Math.max(-840, Math.min(840, b.tz)) : 540, pushToken: null, blocked: [], muted: [], live: null, createdAt: now(), seen: now() };
     db.users[u.id] = u;
     touch();
     return json(res, 200, { uid: u.id, token, ...syncOut(u) });
@@ -273,7 +290,7 @@ async function api(req, res, p, ip) {
       u.name = name;
     }
     if (b.color && COLORS.includes(b.color)) u.color = b.color;
-    if (b.lang) u.lang = b.lang === 'ja' ? 'ja' : 'en';
+    if (b.lang) u.lang = langOf(b.lang);
     if (Number.isFinite(b.tz)) u.tz = Math.max(-840, Math.min(840, b.tz));
     if (typeof b.notify === 'boolean') u.notify = b.notify;
     if (b.pushToken !== undefined) {
@@ -341,7 +358,7 @@ async function api(req, res, p, ip) {
   if (p === '/v1/rooms' && method === 'POST') {
     const b = await readJson(req);
     if (myRooms(u).length >= MAX_ROOMS) throw fail(400, 'too_many');
-    const r = { id: rid(8), name: clip(b.name, 12) || (u.lang === 'ja' ? '作業部屋' : 'Study room'), owner: u.id, members: [u.id], code: newCode(), totalMs: 0, createdAt: now() };
+    const r = { id: rid(8), name: clip(b.name, 12) || ROOM_DEFAULT[langOf(u.lang)], owner: u.id, members: [u.id], code: newCode(), totalMs: 0, createdAt: now() };
     db.rooms[r.id] = r;
     touch();
     return json(res, 200, { room: roomOut(r, u), ...syncOut(u) });
