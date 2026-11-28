@@ -52,6 +52,11 @@ def one(p):
             x = get(f'http://export.arxiv.org/api/query?id_list={aid}', raw=True)
             if x: out['abstract'] = re.sub(r'\s+', ' ', (re.search(rb'<summary>(.*?)</summary>', x, re.S) or [b'', b''])[1].decode())
     if not out.get('abstract') and p.get('title'):
+        c = get('https://api.crossref.org/works?rows=1&query.bibliographic=' + urllib.parse.quote(p['title'][:200] + ' ' + str(p.get('year') or '')))
+        it = ((c or {}).get('message') or {}).get('items') or []
+        if it and it[0].get('abstract'):
+            out['abstract'] = re.sub(r'<[^>]+>', ' ', it[0]['abstract']); out['oa_title'] = (it[0].get('title') or [''])[0]; out['doi'] = it[0].get('DOI')
+    if not out.get('abstract') and p.get('title'):
         s = get('https://api.semanticscholar.org/graph/v1/paper/search?limit=1&fields=title,abstract,tldr,year&query=' + urllib.parse.quote(p['title'][:200]))
         if s and s.get('data'): out['abstract'] = s['data'][0].get('abstract') or ((s['data'][0].get('tldr') or {}).get('text'))
     for u in pdfs[:3]:
