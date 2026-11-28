@@ -77,8 +77,8 @@
      "p": 0.3017
     }
    ],
-   "test_n": 104687,
-   "brier_calibrated": 0.2128,
+   "test_n": 104944,
+   "brier_calibrated": 0.2129,
    "brier_raw_cloudcover": 0.2892,
    "brier_climatology": 0.2487,
    "climatology": 0.5249
@@ -146,7 +146,7 @@
      "p": 0.3189
     }
    ],
-   "test_n": 104687,
+   "test_n": 104944,
    "brier_calibrated": 0.2196,
    "brier_raw_cloudcover": 0.3022,
    "brier_climatology": 0.2487,
@@ -215,9 +215,9 @@
      "p": 0.3304
     }
    ],
-   "test_n": 104687,
+   "test_n": 104944,
    "brier_calibrated": 0.2232,
-   "brier_raw_cloudcover": 0.3052,
+   "brier_raw_cloudcover": 0.3051,
    "brier_climatology": 0.2487,
    "climatology": 0.5249
   },
@@ -284,9 +284,9 @@
      "p": 0.3662
     }
    ],
-   "test_n": 104687,
+   "test_n": 104944,
    "brier_calibrated": 0.2323,
-   "brier_raw_cloudcover": 0.3136,
+   "brier_raw_cloudcover": 0.3135,
    "brier_climatology": 0.2487,
    "climatology": 0.5249
   }

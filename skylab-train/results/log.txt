@@ -1,64 +1,28 @@
 stations ['EGSC', 'EGLL', 'EGPH', 'EGPB', 'EGCC', 'EGGD', 'EGAA', 'EGPD', 'EGBB', 'EGNT', 'EGHH', 'EGPK']
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.205&longitude=0.175&hourly=temperature_2m_previous_day1 <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.205&longitude=0.175&hourly=temperature_2m_previous_day1 <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.205&longitude=0.175&hourly=temperature_2m_previous_day1 <urlopen error _ssl.c:994: The handshake operation timed out>
-EGSC obs 7576 fc 24000 pairs 60608
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.4785&longitude=-0.4614&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.4785&longitude=-0.4614&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.4785&longitude=-0.4614&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.4785&longitude=-0.4614&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGLL obs 23991 fc 24000 pairs 191916
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.95&longitude=-3.35&hourly=temperature_2m_previous_day1% <urlopen error _ssl.c:994: The handshake operation timed out>
-EGPH obs 23747 fc 24000 pairs 189968
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=59.8789&longitude=-1.2956&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGPB obs 23822 fc 24000 pairs 190560
-EGCC obs 23989 fc 24000 pairs 191904
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.3827&longitude=-2.7191&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.3827&longitude=-2.7191&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=51.3827&longitude=-2.7191&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGGD obs 23991 fc 24000 pairs 191912
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=54.6633&longitude=-6.2258&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=54.6633&longitude=-6.2258&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=54.6633&longitude=-6.2258&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=54.6633&longitude=-6.2258&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGAA obs 23814 fc 24000 pairs 190504
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=57.2049&longitude=-2.2053&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=57.2049&longitude=-2.2053&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=57.2049&longitude=-2.2053&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=57.2049&longitude=-2.2053&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=57.2049&longitude=-2.2053&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGPD obs 23995 fc 24000 pairs 191952
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.4602&longitude=-1.7576&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.4602&longitude=-1.7576&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.4602&longitude=-1.7576&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.4602&longitude=-1.7576&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGBB obs 23761 fc 24000 pairs 190076
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.0375&longitude=-1.6917&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.0375&longitude=-1.6917&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.0375&longitude=-1.6917&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.0375&longitude=-1.6917&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGNT obs 23437 fc 24000 pairs 187480
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=50.7794&longitude=-1.8362&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=50.7794&longitude=-1.8362&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=50.7794&longitude=-1.8362&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=50.7794&longitude=-1.8362&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGHH obs 17789 fc 24000 pairs 142312
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.5094&longitude=-4.5867&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.5094&longitude=-4.5867&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-retry 0 https://previous-runs-api.open-meteo.com/v1/forecast?latitude=55.5094&longitude=-4.5867&hourly=temperature_2m_previous_d <urlopen error _ssl.c:994: The handshake operation timed out>
-EGPK obs 23743 fc 24000 pairs 189936
-train 1155072 test 954056
-temperature_2m 1 {"ecmwf_ifs025": 1.311, "gfs_seamless": 1.62, "icon_seamless": 1.229, "ukmo_seamless": 1.274, "mean_of_models": 1.149, "skylab_blend": 1.097, "skylab_gbm": 1.12}
-temperature_2m 2 {"ecmwf_ifs025": 1.42, "gfs_seamless": 1.753, "icon_seamless": 1.388, "ukmo_seamless": 1.518, "mean_of_models": 1.26, "skylab_blend": 1.216, "skylab_gbm": 1.253}
-temperature_2m 3 {"ecmwf_ifs025": 1.588, "gfs_seamless": 1.905, "icon_seamless": 1.601, "ukmo_seamless": 1.684, "mean_of_models": 1.411, "skylab_blend": 1.37, "skylab_gbm": 1.429}
-temperature_2m 5 {"ecmwf_ifs025": 2.071, "gfs_seamless": 2.427, "icon_seamless": 2.345, "ukmo_seamless": 2.311, "mean_of_models": 1.88, "skylab_blend": 1.851, "skylab_gbm": 1.974}
-temperature_2m all {"ecmwf_ifs025": 1.624, "gfs_seamless": 1.95, "icon_seamless": 1.694, "ukmo_seamless": 1.724, "mean_of_models": 1.452, "skylab_blend": 1.414, "skylab_gbm": 1.461}
-wind_speed_10m 1 {"ecmwf_ifs025": 1.589, "gfs_seamless": 1.779, "icon_seamless": 1.57, "ukmo_seamless": 1.637, "mean_of_models": 1.397, "skylab_blend": 1.298, "skylab_gbm": 1.295}
-wind_speed_10m 2 {"ecmwf_ifs025": 1.69, "gfs_seamless": 1.946, "icon_seamless": 1.707, "ukmo_seamless": 1.815, "mean_of_models": 1.507, "skylab_blend": 1.406, "skylab_gbm": 1.406}
-wind_speed_10m 3 {"ecmwf_ifs025": 1.885, "gfs_seamless": 2.16, "icon_seamless": 1.927, "ukmo_seamless": 2.001, "mean_of_models": 1.665, "skylab_blend": 1.575, "skylab_gbm": 1.59}
-wind_speed_10m 5 {"ecmwf_ifs025": 2.299, "gfs_seamless": 2.676, "icon_seamless": 2.616, "ukmo_seamless": 2.571, "mean_of_models": 2.071, "skylab_blend": 1.999, "skylab_gbm": 2.037}
-wind_speed_10m all {"ecmwf_ifs025": 1.885, "gfs_seamless": 2.167, "icon_seamless": 1.996, "ukmo_seamless": 2.027, "mean_of_models": 1.679, "skylab_blend": 1.592, "skylab_gbm": 1.597}
-cloud lead 1 {"test_n": 104687, "brier_calibrated": 0.2128, "brier_raw_cloudcover": 0.2892, "brier_climatology": 0.2487, "climatology": 0.5249}
-cloud lead 2 {"test_n": 104687, "brier_calibrated": 0.2196, "brier_raw_cloudcover": 0.3022, "brier_climatology": 0.2487, "climatology": 0.5249}
-cloud lead 3 {"test_n": 104687, "brier_calibrated": 0.2232, "brier_raw_cloudcover": 0.3052, "brier_climatology": 0.2487, "climatology": 0.5249}
-cloud lead 5 {"test_n": 104687, "brier_calibrated": 0.2323, "brier_raw_cloudcover": 0.3136, "brier_climatology": 0.2487, "climatology": 0.5249}
+EGSC obs 7587 fc 24024 pairs 60696
+EGLL obs 24015 fc 24024 pairs 192108
+EGPH obs 23771 fc 24024 pairs 190160
+EGPB obs 23846 fc 24024 pairs 190752
+EGCC obs 24013 fc 24024 pairs 192096
+EGGD obs 24015 fc 24024 pairs 192104
+EGAA obs 23838 fc 24024 pairs 190696
+EGPD obs 24019 fc 24024 pairs 192144
+EGBB obs 23785 fc 24024 pairs 190268
+EGNT obs 23461 fc 24024 pairs 187672
+EGHH obs 17808 fc 24024 pairs 142456
+EGPK obs 23767 fc 24024 pairs 190128
+train 1155072 test 956208
+temperature_2m 1 {"ecmwf_ifs025": 1.311, "gfs_seamless": 1.619, "icon_seamless": 1.229, "ukmo_seamless": 1.273, "mean_of_models": 1.149, "skylab_blend": 1.096, "skylab_gbm": 1.12}
+temperature_2m 2 {"ecmwf_ifs025": 1.419, "gfs_seamless": 1.753, "icon_seamless": 1.388, "ukmo_seamless": 1.517, "mean_of_models": 1.26, "skylab_blend": 1.216, "skylab_gbm": 1.252}
+temperature_2m 3 {"ecmwf_ifs025": 1.588, "gfs_seamless": 1.905, "icon_seamless": 1.601, "ukmo_seamless": 1.684, "mean_of_models": 1.411, "skylab_blend": 1.37, "skylab_gbm": 1.43}
+temperature_2m 5 {"ecmwf_ifs025": 2.071, "gfs_seamless": 2.425, "icon_seamless": 2.344, "ukmo_seamless": 2.309, "mean_of_models": 1.879, "skylab_blend": 1.851, "skylab_gbm": 1.973}
+temperature_2m all {"ecmwf_ifs025": 1.623, "gfs_seamless": 1.95, "icon_seamless": 1.694, "ukmo_seamless": 1.724, "mean_of_models": 1.452, "skylab_blend": 1.414, "skylab_gbm": 1.461}
+wind_speed_10m 1 {"ecmwf_ifs025": 1.589, "gfs_seamless": 1.78, "icon_seamless": 1.57, "ukmo_seamless": 1.637, "mean_of_models": 1.397, "skylab_blend": 1.297, "skylab_gbm": 1.295}
+wind_speed_10m 2 {"ecmwf_ifs025": 1.69, "gfs_seamless": 1.946, "icon_seamless": 1.707, "ukmo_seamless": 1.815, "mean_of_models": 1.507, "skylab_blend": 1.405, "skylab_gbm": 1.405}
+wind_speed_10m 3 {"ecmwf_ifs025": 1.884, "gfs_seamless": 2.16, "icon_seamless": 1.926, "ukmo_seamless": 2.0, "mean_of_models": 1.664, "skylab_blend": 1.575, "skylab_gbm": 1.589}
+wind_speed_10m 5 {"ecmwf_ifs025": 2.299, "gfs_seamless": 2.675, "icon_seamless": 2.614, "ukmo_seamless": 2.57, "mean_of_models": 2.07, "skylab_blend": 1.999, "skylab_gbm": 2.038}
+wind_speed_10m all {"ecmwf_ifs025": 1.885, "gfs_seamless": 2.167, "icon_seamless": 1.995, "ukmo_seamless": 2.026, "mean_of_models": 1.679, "skylab_blend": 1.592, "skylab_gbm": 1.597}
+cloud lead 1 {"test_n": 104944, "brier_calibrated": 0.2129, "brier_raw_cloudcover": 0.2892, "brier_climatology": 0.2487, "climatology": 0.5249}
+cloud lead 2 {"test_n": 104944, "brier_calibrated": 0.2196, "brier_raw_cloudcover": 0.3022, "brier_climatology": 0.2487, "climatology": 0.5249}
+cloud lead 3 {"test_n": 104944, "brier_calibrated": 0.2232, "brier_raw_cloudcover": 0.3051, "brier_climatology": 0.2487, "climatology": 0.5249}
+cloud lead 5 {"test_n": 104944, "brier_calibrated": 0.2323, "brier_raw_cloudcover": 0.3135, "brier_climatology": 0.2487, "climatology": 0.5249}
