@@ -1,6 +1,6 @@
 """全206本の要旨・結論を一括取得（OpenAlex / arXiv / Semantic Scholar / オープンアクセス PDF）。
 本文はリポジトリに入れない（Actions の成果物のみ）。"""
-import json, re, io, time, urllib.parse, urllib.request
+import json, os, re, io, time, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 UA = {'User-Agent': 'skylab-research (mailto:skylab-bot@users.noreply.github.com)'}
 def get(u, t=40, raw=False):
@@ -28,6 +28,7 @@ def pdftext(u):
     concl = t[m[-1]:m[-1] + 4000] if m else ''
     res = [x.start() for x in re.finditer(r'\n\s*(\d+\.?\s*)?Results?\b', t)]
     nums = ' '.join(re.findall(r'[^.\n]*\d+(?:\.\d+)?\s?(?:%|km|mm|hPa|dB|°|K)\b[^.\n]*\.', t)[:25])
+    if os.environ.get('FULL'): return json.dumps({'full': t[:120000], 'pages': len(t)}, ensure_ascii=False)
     return json.dumps({'conclusion': concl, 'numeric_sentences': nums[:4000], 'pages': len(t)}, ensure_ascii=False)
 def one(p):
     out = {'no': p['no'], 'title': p['title']}
