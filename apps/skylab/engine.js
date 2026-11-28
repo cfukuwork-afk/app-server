@@ -1,4 +1,3 @@
-// 自動生成：tabi-shiori/skylab/src/sky.ts を esbuild でまとめたもの。直接編集しない（sky.ts を直して作り直す）
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -30,6 +29,7 @@ __export(sky_exports, {
   meteorShowers: () => meteorShowers,
   moonInfo: () => moonInfo,
   moonPos: () => moonPos,
+  nightSky: () => nightSky,
   pClear: () => pClear,
   rainbow: () => rainbow,
   stars: () => stars,
@@ -3142,6 +3142,24 @@ function rainbow(lat, lon, w, now) {
   it.extra = { top: 42 - best.alt, hours: hits.length };
   return it;
 }
+function nightSky(lat, lon, t, k = 0.2) {
+  const rad = Math.PI / 180;
+  const mp = moonPos(lat, lon, t);
+  const nl = (v) => 34.08 * Math.exp(20.7233 - 0.92104 * v);
+  const B0 = nl(21.6);
+  let Bm = 0;
+  if (mp.alt > 0) {
+    const a = Math.acos(Math.max(-1, Math.min(1, 2 * mp.frac - 1))) / rad;
+    const rho = 90 - mp.alt;
+    const X = (z) => 1 / Math.sqrt(1 - 0.96 * Math.sin(z * rad) ** 2);
+    const I = Math.pow(10, -0.4 * (3.84 + 0.026 * a + 4e-9 * a ** 4));
+    const f = Math.pow(10, 5.36) * (1.06 + Math.cos(rho * rad) ** 2) + Math.pow(10, 6.15 - Math.max(rho, 10) / 40);
+    Bm = f * I * Math.pow(10, -0.4 * k * X(90 - mp.alt)) * (1 - Math.pow(10, -0.4 * k * X(0)));
+  }
+  const sb = (20.7233 - Math.log((B0 + Bm) / 34.08)) / 0.92104;
+  const nelm = 7.93 - 5 * Math.log10(Math.pow(10, 4.316 - sb / 5) + 1);
+  return { sb: Math.round(sb * 100) / 100, nelm: Math.round(nelm * 10) / 10, moonAlt: mp.alt, moonFrac: mp.frac };
+}
 function stars(lat, lon, w, now) {
   const res = [];
   for (let k = 0; k < 30; k++) {
@@ -3168,7 +3186,10 @@ function stars(lat, lon, w, now) {
     star.start = good[0].t;
     star.end = new Date(good[good.length - 1].t.getTime() + 36e5);
   }
-  star.extra = { cloud: bestS.cloud, nightHours: night.length };
+  star.extra = { cloud: bestS.cloud, nightHours: night.length, ...(() => {
+    const n = nightSky(lat, lon, bestS.t);
+    return { nelm: n.nelm, sb: n.sb };
+  })() };
   const dark = night.filter((r) => !r.moonUp || r.moonFrac < 0.15);
   if (!dark.length) {
     milky.level = 0;
@@ -3385,6 +3406,7 @@ function withProb(items, lat, lon, d, now = /* @__PURE__ */ new Date()) {
   meteorShowers,
   moonInfo,
   moonPos,
+  nightSky,
   pClear,
   rainbow,
   stars,
