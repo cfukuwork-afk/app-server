@@ -1,0 +1,36 @@
+name: skylab-aifs
+# H-T3：4モデル平均に ECMWF AIFS を足すと当たるか（同じ期間・同じ地点で比較）
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/skylab-aifs-request']
+permissions:
+  contents: write
+jobs:
+  aifs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install scikit-learn numpy
+      - name: probe AIFS model name
+        id: probe
+        run: |
+          for m in ecmwf_aifs025_single ecmwf_aifs025; do
+            n=$(curl -s "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=52.2&longitude=0.1&hourly=temperature_2m_previous_day1&models=$m&start_date=2025-03-01&end_date=2025-03-02" | python3 -c "import sys,json;j=json.load(sys.stdin);h=j.get('hourly',{});print(sum(v is not None for k,v2 in h.items() if k!='time' for v in v2))" 2>/dev/null || echo 0)
+            echo "$m $n"; if [ "${n:-0}" -gt 0 ]; then echo "m=$m" >> $GITHUB_OUTPUT; break; fi
+          done
+      - run: cd skylab-train && OUT=out_aifs START=2025-03-01 MODELS=ecmwf_ifs025,gfs_seamless,icon_seamless,ukmo_seamless,${{ steps.probe.outputs.m }} python backfill_train.py
+        if: steps.probe.outputs.m != ''
+      - run: cd skylab-train && OUT=out_base START=2025-03-01 python backfill_train.py
+        if: steps.probe.outputs.m != ''
+      - name: save
+        if: always()
+        run: |
+          mkdir -p skylab-train/results/aifs
+          echo "${{ steps.probe.outputs.m }}" > skylab-train/results/aifs/model.txt
+          for d in out_aifs out_base; do [ -f skylab-train/$d/skill.json ] && cp skylab-train/$d/skill.json skylab-train/results/aifs/$d.skill.json && cp skylab-train/$d/cloud_calibration.json skylab-train/results/aifs/$d.cloud.json; done
+          git config user.name skylab-bot && git config user.email skylab-bot@users.noreply.github.com
+          git add skylab-train/results/aifs && git commit -m "SkyLab H-T3 AIFS" && git pull --rebase && git push

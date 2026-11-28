@@ -14,7 +14,7 @@ START = os.environ.get('START', '2024-03-01')
 END = os.environ.get('END') or (datetime.now(timezone.utc) - timedelta(days=2)).date().isoformat()
 SPLIT = os.environ.get('SPLIT', '2025-09-01')          # これより前で学習、以後で検証
 STATIONS = os.environ.get('STATIONS', 'EGSC,EGLL,EGPH,EGPB,EGCC,EGGD,EGAA,EGPD,EGBB,EGNT,EGHH,EGPK').split(',')
-MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'ukmo_seamless']
+MODELS = os.environ.get('MODELS', 'ecmwf_ifs025,gfs_seamless,icon_seamless,ukmo_seamless').split(',')
 LEADS = [1, 2, 3, 5]
 VARS = {'temperature_2m': 'tmpc', 'wind_speed_10m': 'wind_ms'}
 CLOUD = 'cloud_cover'  # 雲は回帰ではなく「晴れ間（BKN/OVC/VV の層がない）」の確率の較正に使う
@@ -83,7 +83,7 @@ def fcst(st):
         e = min(d + timedelta(days=89), datetime.fromisoformat(END))
         q = urllib.parse.urlencode({'latitude': lat, 'longitude': lon, 'hourly': ','.join(hourly), 'models': ','.join(MODELS),
             'start_date': d.date().isoformat(), 'end_date': e.date().isoformat(), 'wind_speed_unit': 'ms', 'timezone': 'GMT'})
-        j = json.loads(cached(f'fc_{st}_{d.date()}_{e.date()}.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
+        j = json.loads(cached(f'fc_{st}_{d.date()}_{e.date()}' + ('' if len(MODELS) == 4 else '_' + str(len(MODELS))) + '.json', 'https://previous-runs-api.open-meteo.com/v1/forecast?' + q))
         if 'hourly' not in j:
             say('no hourly', st, d.date(), str(j)[:200])
         else:
