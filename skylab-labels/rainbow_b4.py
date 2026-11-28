@@ -10,7 +10,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 random.seed(11); os.makedirs('out', exist_ok=True)
 exec(open('rainbow_conditions.py').read().split("rows = [r for r")[0].split("random.seed(7)")[1].replace("log = open('out/rainbow_log.txt', 'a')", "log = open('out/b4_log.txt', 'a')"))
-rows = [r for r in csv.DictReader(open('results/labels_commons.csv')) if r['phenomenon'] == 'rainbow' and r['lat']]
+rows = [r for r in csv.DictReader(open('results/labels_rainbow.csv')) if r['phenomenon'] == 'rainbow' and r['lat']]
 cases = []
 for r in rows:
     t = parse(r['taken_raw'])
