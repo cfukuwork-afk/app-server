@@ -36,7 +36,7 @@ for ci, (lat, lon, t) in enumerate(cases):
     d0 = t.date().replace(day=1); d1 = (d0 + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     q = urllib.parse.urlencode({'latitude': lat, 'longitude': lon, 'start_date': d0, 'end_date': d1,
         'hourly': 'precipitation,direct_radiation,wind_speed_10m,temperature_2m,cloud_cover', 'timezone': 'auto'})
-    j = get('https://archive-api.open-meteo.com/v1/archive?' + q); time.sleep(0.4)
+    j = get('https://archive-api.open-meteo.com/v1/archive?' + q); time.sleep(0.15)
     if not j or 'hourly' not in j: continue
     H = j['hourly']; H['_off'] = j.get('utc_offset_seconds', 0)
     key = t.replace(minute=0).isoformat(timespec='minutes')
