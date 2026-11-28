@@ -25,15 +25,18 @@ const CONF_FILE = path.join(__dirname, 'store.json'); // App Store の住所な�
 const MAX_MEMBERS = 5; // 自分を入れて5人
 const FREE_GROUPS = 2;
 const MOODS = {
-  sleepy: { ja: 'ねむい', en: 'Sleepy', kao: '(´-ω-`)zz' },
-  miss: { ja: '会いたい', en: 'Miss you', kao: '(っ´ω`c)♡' },
-  work: { ja: 'がんばり中', en: 'Busy', kao: '(ง`ω´)ง' },
-  eat: { ja: 'ごはん中', en: 'Eating', kao: '(*´ч`*)' },
-  move: { ja: '移動中', en: 'On my way', kao: 'ε=┌(・_・)┘' },
-  free: { ja: 'ひま', en: 'Bored', kao: '(´ー`)' },
-  down: { ja: 'しょんぼり', en: 'Down', kao: '(´・ω・`)' },
-  happy: { ja: 'うれしい', en: 'Happy', kao: '(*´▽`*)' },
+  sleepy: { ja: 'ねむい', en: 'Sleepy', ko: '졸려', 'zh-Hans': '困了', 'zh-Hant': '想睡', es: 'Con sueño', fr: 'Fatigué', de: 'Müde', it: 'Ho sonno', pt: 'Com sono', kao: '(´-ω-`)zz' },
+  miss: { ja: '会いたい', en: 'Miss you', ko: '보고 싶어', 'zh-Hans': '想见你', 'zh-Hant': '想見你', es: 'Te extraño', fr: 'Tu me manques', de: 'Vermisse dich', it: 'Mi manchi', pt: 'Saudade', kao: '(っ´ω`c)♡' },
+  work: { ja: 'がんばり中', en: 'Busy', ko: '열일 중', 'zh-Hans': '努力中', 'zh-Hant': '努力中', es: 'Ocupado', fr: 'Occupé', de: 'Beschäftigt', it: 'Impegnato', pt: 'Ocupado', kao: '(ง`ω´)ง' },
+  eat: { ja: 'ごはん中', en: 'Eating', ko: '밥 먹는 중', 'zh-Hans': '吃饭中', 'zh-Hant': '吃飯中', es: 'Comiendo', fr: 'À table', de: 'Beim Essen', it: 'A tavola', pt: 'Comendo', kao: '(*´ч`*)' },
+  move: { ja: '移動中', en: 'On my way', ko: '이동 중', 'zh-Hans': '在路上', 'zh-Hant': '在路上', es: 'En camino', fr: 'En route', de: 'Unterwegs', it: 'In viaggio', pt: 'A caminho', kao: 'ε=┌(・_・)┘' },
+  free: { ja: 'ひま', en: 'Bored', ko: '심심해', 'zh-Hans': '无聊', 'zh-Hant': '無聊', es: 'Aburrido', fr: 'Je m’ennuie', de: 'Langweilig', it: 'Mi annoio', pt: 'Entediado', kao: '(´ー`)' },
+  down: { ja: 'しょんぼり', en: 'Down', ko: '시무룩', 'zh-Hans': '沮丧', 'zh-Hant': '沮喪', es: 'Bajón', fr: 'Pas le moral', de: 'Niedergeschlagen', it: 'Giù di morale', pt: 'Pra baixo', kao: '(´・ω・`)' },
+  happy: { ja: 'うれしい', en: 'Happy', ko: '기뻐', 'zh-Hans': '开心', 'zh-Hant': '開心', es: 'Feliz', fr: 'Content', de: 'Glücklich', it: 'Felice', pt: 'Feliz', kao: '(*´▽`*)' },
 };
+// 言語（アプリと同じ10言語）
+const LANGS = ['ja', 'en', 'ko', 'zh-Hans', 'zh-Hant', 'es', 'fr', 'de', 'it', 'pt'];
+const langOf = (l) => (LANGS.includes(l) ? l : l === 'zh' ? 'zh-Hans' : 'en');
 const COLORS = ['#E58B6B', '#5AA39B', '#C98BB5', '#6C9BD2', '#D9A441', '#8C9A5B', '#7C6BC4', '#D9727F', '#4FA0B8', '#B08455'];
 
 /* ---------- 小さな道具 ---------- */
@@ -183,8 +186,16 @@ function syncOut(u) {
 /* ---------- ウィジェット用の中身（ウィジェット自身が定期的に取りに来る。アプリを開いていなくても名前の変更なども反映される） ---------- */
 // アプリの src/widgetSync.ts と同じ形にする。画像は "art:<気分>"（端末にある絵）か "remote:/img/..."（ウィジェットが取りに行く）
 const WT = {
-  ja: { you: 'あなた', empty: 'アプリでグループを作ろう', hint: 'まだ誰も送っていません', noPost: 'まだ気分が届いていません', noPostMe: 'タップして気分を送ろう' },
-  en: { you: 'You', empty: 'Make a group in the app', hint: 'No one has posted yet', noPost: 'No mood yet', noPostMe: 'Tap to share your mood' },
+  ja: { you: 'あなた', empty: 'アプリでグループを作ろう', hint: 'まだ誰も送っていません', noPost: 'まだ気分が届いていません', noPostMe: 'タップして気分を送ろう', doodle: '落書きが届きました', stamp: 'イラストが届きました', group: 'グループ' },
+  en: { you: 'You', empty: 'Make a group in the app', hint: 'No one has posted yet', noPost: 'No mood yet', noPostMe: 'Tap to share your mood', doodle: 'Sent a doodle', stamp: 'Sent a picture', group: 'Group' },
+  ko: { you: '나', empty: '앱에서 그룹을 만들어요', hint: '아직 아무도 보내지 않았어요', noPost: '아직 기분이 오지 않았어요', noPostMe: '탭해서 기분을 보내요', doodle: '낙서가 왔어요', stamp: '일러스트가 왔어요', group: '그룹' },
+  'zh-Hans': { you: '你', empty: '在应用里创建群组吧', hint: '还没有人发送', noPost: '还没有收到心情', noPostMe: '点按发送心情', doodle: '发来了涂鸦', stamp: '发来了插画', group: '群组' },
+  'zh-Hant': { you: '你', empty: '在 App 裡建立群組吧', hint: '還沒有人傳送', noPost: '還沒有收到心情', noPostMe: '點一下傳送心情', doodle: '傳來了塗鴉', stamp: '傳來了插畫', group: '群組' },
+  es: { you: 'Tú', empty: 'Crea un grupo en la app', hint: 'Nadie ha publicado aún', noPost: 'Aún sin ánimo', noPostMe: 'Toca para compartir tu ánimo', doodle: 'Envió un garabato', stamp: 'Envió una imagen', group: 'Grupo' },
+  fr: { you: 'Vous', empty: 'Créez un groupe dans l’app', hint: 'Personne n’a encore publié', noPost: 'Pas encore d’humeur', noPostMe: 'Touchez pour partager votre humeur', doodle: 'A envoyé un gribouillis', stamp: 'A envoyé une image', group: 'Groupe' },
+  de: { you: 'Du', empty: 'Erstelle eine Gruppe in der App', hint: 'Noch hat niemand gepostet', noPost: 'Noch keine Stimmung', noPostMe: 'Tippen, um deine Stimmung zu teilen', doodle: 'Hat eine Kritzelei geschickt', stamp: 'Hat ein Bild geschickt', group: 'Gruppe' },
+  it: { you: 'Tu', empty: 'Crea un gruppo nell’app', hint: 'Nessuno ha ancora pubblicato', noPost: 'Ancora nessun umore', noPostMe: 'Tocca per condividere il tuo umore', doodle: 'Ha inviato uno scarabocchio', stamp: 'Ha inviato un’immagine', group: 'Gruppo' },
+  pt: { you: 'Você', empty: 'Crie um grupo no app', hint: 'Ninguém postou ainda', noPost: 'Nenhum humor ainda', noPostMe: 'Toque para compartilhar seu humor', doodle: 'Enviou um rabisco', stamp: 'Enviou uma imagem', group: 'Grupo' },
 };
 function tintHex(hex, a = 0.17) {
   const mm = /^#?([0-9a-f]{6})$/i.exec(hex || '');
@@ -194,7 +205,7 @@ function tintHex(hex, a = 0.17) {
   return '#' + [mix(n >> 16), mix((n >> 8) & 255), mix(n & 255)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 function widgetOut(u, tzMin, theme) {
-  const L = WT[u.lang === 'ja' ? 'ja' : 'en'];
+  const L = WT[langOf(u.lang)];
   const local = (ms) => new Date(ms + tzMin * 60e3);
   const hhmmTz = (at) => {
     const d = local(at), n = local(now());
@@ -238,11 +249,11 @@ function widgetOut(u, tzMin, theme) {
 
 /* ---------- 通知（Expo のプッシュ） ---------- */
 function moodText(p, lang) {
-  const l = lang === 'ja' ? 'ja' : 'en';
+  const l = langOf(lang);
   if (p.kind === 'kao') return p.kao || (p.mood && MOODS[p.mood]?.kao) || '';
-  if (p.kind === 'art') return (MOODS[p.mood]?.kao || '') + ' ' + (MOODS[p.mood]?.[l] || '');
-  if (p.kind === 'doodle') return l === 'ja' ? '落書きが届きました' : 'Sent a doodle';
-  if (p.kind === 'stamp') return l === 'ja' ? 'イラストが届きました' : 'Sent a picture';
+  if (p.kind === 'art') return (MOODS[p.mood]?.kao || '') + ' ' + (MOODS[p.mood]?.[l] || MOODS[p.mood]?.en || '');
+  if (p.kind === 'doodle') return WT[l].doodle;
+  if (p.kind === 'stamp') return WT[l].stamp;
   return '';
 }
 async function notify(p, g, from) {
@@ -329,7 +340,7 @@ async function api(req, res, p, ip) {
     const name = clip(b.name, 12);
     if (!name) throw fail(400, 'name');
     const token = rid(24);
-    const u = { id: rid(8), tokenHash: hash(token), name, color: COLORS[Math.floor(Math.random() * COLORS.length)], lang: b.lang === 'ja' ? 'ja' : 'en', pushToken: null, blocked: [], muted: [], plus: false, createdAt: now(), seen: now() };
+    const u = { id: rid(8), tokenHash: hash(token), name, color: COLORS[Math.floor(Math.random() * COLORS.length)], lang: langOf(b.lang), pushToken: null, blocked: [], muted: [], plus: false, createdAt: now(), seen: now() };
     db.users[u.id] = u;
     touch();
     return json(res, 200, { uid: u.id, token, ...syncOut(u) });
@@ -356,7 +367,7 @@ async function api(req, res, p, ip) {
       for (const g of myGroups(u)) silent(g, u.id, { t: 'sync' });
     }
     if (b.color && COLORS.includes(b.color)) u.color = b.color;
-    if (b.lang) u.lang = b.lang === 'ja' ? 'ja' : 'en';
+    if (b.lang) u.lang = langOf(b.lang);
     if (b.pushToken !== undefined) {
       const t = b.pushToken ? String(b.pushToken).slice(0, 200) : null;
       if (t) for (const o of Object.values(db.users)) if (o.id !== u.id && o.pushToken === t) o.pushToken = null; // 同じ端末で作り直したとき
@@ -384,7 +395,7 @@ async function api(req, res, p, ip) {
     const b = await readJson(req);
     if (myGroups(u).length >= FREE_GROUPS && !u.plus) throw fail(402, 'plus');
     if (myGroups(u).length >= 30) throw fail(400, 'too_many');
-    const g = { id: rid(8), name: clip(b.name, 12) || (u.lang === 'ja' ? 'グループ' : 'Group'), owner: u.id, members: [u.id], code: newCode(), createdAt: now() };
+    const g = { id: rid(8), name: clip(b.name, 12) || WT[langOf(u.lang)].group, owner: u.id, members: [u.id], code: newCode(), createdAt: now() };
     db.groups[g.id] = g;
     touch();
     return json(res, 200, { group: groupOut(g, u), ...syncOut(u) });
