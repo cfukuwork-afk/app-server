@@ -1,0 +1,28 @@
+{
+ "n_photos": 500,
+ "n_controls": 2500,
+ "A_now": {
+  "brier": 0.0978,
+  "logloss": 0.3367,
+  "auc": 0.7787
+ },
+ "B_plus_lit56": {
+  "brier": 0.0981,
+  "logloss": 0.339,
+  "auc": 0.7676
+ },
+ "climatology_brier": 0.1389,
+ "B_coef": {
+  "sun_window": -6.483,
+  "sun_low": 1.922,
+  "rain": 1.222,
+  "log_rain": 0.034,
+  "sunshine": 0.022,
+  "log_direct": 0.261,
+  "rain_ended_1h": -0.019,
+  "wind_lt21": 0.032,
+  "temp_gt8": 0.243,
+  "cloud_gt40": 0.551,
+  "cloud_frac": -0.612
+ }
+}
