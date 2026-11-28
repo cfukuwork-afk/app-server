@@ -1,46 +1,46 @@
 {
- "cases": 5,
+ "cases": 26,
  "by_lead": {
   "60": {
-   "n_test": 57,
-   "w_ext": 1.0,
+   "n_test": 247,
+   "w_ext": 0.15,
    "mae": {
-    "extrapolation": 0.1648,
-    "nwp": 0.1562,
-    "blend": 0.1648
+    "extrapolation": 0.2435,
+    "nwp": 0.1698,
+    "blend": 0.1672
    },
    "accuracy_0.5mm": {
-    "extrapolation": 0.8772,
-    "nwp": 0.9298,
-    "blend": 0.8772
+    "extrapolation": 0.8664,
+    "nwp": 0.915,
+    "blend": 0.9231
    }
   },
   "120": {
-   "n_test": 57,
-   "w_ext": 0.0,
+   "n_test": 247,
+   "w_ext": 0.1,
    "mae": {
-    "extrapolation": 0.2738,
-    "nwp": 0.1278,
-    "blend": 0.1278
+    "extrapolation": 0.3672,
+    "nwp": 0.2639,
+    "blend": 0.2564
    },
    "accuracy_0.5mm": {
-    "extrapolation": 0.807,
-    "nwp": 0.8947,
-    "blend": 0.8947
+    "extrapolation": 0.8219,
+    "nwp": 0.8907,
+    "blend": 0.8988
    }
   },
   "180": {
-   "n_test": 57,
-   "w_ext": 0.0,
+   "n_test": 247,
+   "w_ext": 0.35,
    "mae": {
-    "extrapolation": 0.3031,
-    "nwp": 0.1137,
-    "blend": 0.1137
+    "extrapolation": 0.3499,
+    "nwp": 0.2532,
+    "blend": 0.2465
    },
    "accuracy_0.5mm": {
-    "extrapolation": 0.7895,
-    "nwp": 0.9123,
-    "blend": 0.9123
+    "extrapolation": 0.8097,
+    "nwp": 0.8704,
+    "blend": 0.8704
    }
   }
  }
