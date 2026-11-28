@@ -13,8 +13,8 @@ def inv(ix):
     return ' '.join(w[i] for i in sorted(w))
 known=set(json.load(open('known_dois.json'))); seen=set(); out=[]
 for q in json.load(open('discover_queries.json')):
-    for sort in ['relevance_score:desc','cited_by_count:desc']:
-        j=get('https://api.openalex.org/works?per-page=25&sort=%s&filter=has_abstract:true,publication_year:>1979&search=%s'%(sort,urllib.parse.quote(q)))
+    for sort in ['cited_by_count:desc','publication_date:desc']:
+        j=get('https://api.openalex.org/works?per-page=25&sort=%s&filter=has_abstract:true,publication_year:>1979,title.search:%s'%(sort,urllib.parse.quote(q)))
         for w in (j or {}).get('results',[]):
             d=(w.get('doi') or '').replace('https://doi.org/','').lower()
             if not d or d in known or d in seen: continue
