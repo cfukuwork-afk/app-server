@@ -3262,8 +3262,9 @@ var SHOWERS = [
 function meteorShowers(lat, lon, now) {
   const o = obsOf(lat, lon);
   return SHOWERS.map((s) => {
-    let peak = SearchSunLongitude(s.lam, new Date(now.getTime() - 40 * 864e5), 370).date;
-    if (peak.getTime() < now.getTime() - 2 * 864e5) peak = SearchSunLongitude(s.lam, new Date(peak.getTime() + 300 * 864e5), 120).date;
+    let peak = null;
+    for (let k = 0; k < 5 && !peak; k++) peak = SearchSunLongitude(s.lam, new Date(now.getTime() - (2 - k) * 864e5), 380)?.date ?? null;
+    if (!peak) return null;
     let best = { t: peak, alt: -90 };
     for (let k = -14; k <= 14; k++) {
       const t = new Date(peak.getTime() + k * 36e5);
@@ -3274,7 +3275,7 @@ function meteorShowers(lat, lon, now) {
     const mp = moonPos(lat, lon, best.t);
     const rate = best.alt > 0 ? Math.round(s.zhr * Math.sin(best.alt * Math.PI / 180)) : 0;
     return { ...s, peak, best: best.t, radiantAlt: best.alt, rate, moonFrac: mp.frac, moonUp: mp.alt > 0 };
-  }).sort((a, b) => a.peak.getTime() - b.peak.getTime());
+  }).filter((x) => !!x).sort((a, b) => a.peak.getTime() - b.peak.getTime());
 }
 function eclipses(lat, lon, now) {
   const out = [];
