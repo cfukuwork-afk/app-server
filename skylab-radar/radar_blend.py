@@ -63,7 +63,7 @@ LEADS = [60, 120, 180]
 random.seed(3)
 today = dt.datetime.now(dt.UTC).replace(tzinfo=None).replace(minute=0, second=0, microsecond=0)
 rows = []
-for dd in sorted(random.sample(range(10, 700), int(os.environ.get('N_DAYS', '45')))):
+for dd in sorted(random.sample(range(10, 700), int(os.environ.get('N_DAYS', '160')))):
     t0 = (today - dt.timedelta(days=dd)).replace(hour=random.choice([9, 12, 15]))
     try:
         past = [load(t0 - dt.timedelta(minutes=15 * k)) for k in (3, 2, 1, 0)]
